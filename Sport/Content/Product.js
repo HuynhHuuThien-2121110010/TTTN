@@ -6,21 +6,31 @@ import {
   Image,
   View,
   Text,
+  Alert,
   FlatList,
   TouchableOpacity,
 } from "react-native";
-
+import Carousel from 'react-native-snap-carousel';
+import Toast from "react-native-toast-message";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 const Product = () => {
   const [products, setProducts] = useState([]);
   const navigation = useNavigation();
+  const [cart, setCart] = useState([]);
   const [visibleSpringItemCount, setVisibleSpringItemCount] = useState(5);
 
   useEffect(() => {
-    // Gọi API để lấy dữ liệu sản phẩm
-    fetch("https://fakestoreapi.com/products")
-      .then((response) => response.json())
-      .then((data) => setProducts(data))
-      .catch((error) => console.error("Error fetching data:", error));
+    const fetchData = async () => {
+      try {
+        const response = await fetch("https://fakestoreapi.com/products");
+        const data = await response.json();
+        setProducts(data);
+      } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu:", error);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const handleProductPress = (product) => {
@@ -29,7 +39,39 @@ const Product = () => {
     // và đảm bảo rằng nó đã được cấu hình đúng trong ứng dụng của bạn.
     navigation.navigate("ProductDetail", { product });
   };
+  const addToCart = async (item) => {
+    try {
+      const existingCart = await AsyncStorage.getItem("cart");
+      const existingCartArray = existingCart ? JSON.parse(existingCart) : [];
 
+      const existingItemIndex = existingCartArray.findIndex(
+        (cartItem) => cartItem.id === item.id
+      );
+
+      if (existingItemIndex !== -1) {
+        existingCartArray[existingItemIndex].quantity += 1;
+        existingCartArray[existingItemIndex].totalPrice =
+          existingCartArray[existingItemIndex].quantity * item.price;
+      } else {
+        const newItem = { ...item, quantity: 1, totalPrice: item.price };
+        existingCartArray.push(newItem);
+      }
+
+      await AsyncStorage.setItem("cart", JSON.stringify(existingCartArray));
+      setCart(existingCartArray);
+
+      // Hiển thị Toast
+      Toast.show({
+        type: "success",
+        position: "top",
+        text1: "Thông báo",
+        text2: "Đã thêm sản phẩm vào giỏ hàng!",
+        visibilityTime: 2000,
+      });
+    } catch (error) {
+      console.error("Lỗi khi thêm sản phẩm vào giỏ hàng:", error);
+    }
+  };
   const handleShowMoreSpring = () => {
     setVisibleSpringItemCount(visibleSpringItemCount + 4);
   };
@@ -51,7 +93,10 @@ const Product = () => {
             {truncatedTitle}
           </Text>
           <Text style={styles.productPrice}>{`$${item.price}`}</Text>
-          <TouchableOpacity style={styles.addToCartButton}>
+          <TouchableOpacity
+            style={styles.addToCartButton}
+            onPress={() => addToCart(item)} // Gọi hàm addToCart khi nhấn vào nút "Add to Cart"
+          >
             <Text style={styles.addToCartButtonText}>Add to Cart</Text>
           </TouchableOpacity>
         </View>

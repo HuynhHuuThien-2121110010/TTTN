@@ -11,62 +11,59 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import { useNavigation } from "@react-navigation/native";
 
 const MyComponent = () => {
-  const [showCategories, setShowCategories] = useState(false);
-  const categories = [
-    { id: 1, name: "Category 1" },
-    { id: 2, name: "Category 2" },
-    { id: 3, name: "Category 3" },
-    // Thêm danh mục khác nếu cần
-  ];
-
-  const additionalContent = "Additional Content A";
-
-  const toggleCategories = () => {
-    setShowCategories(!showCategories);
-  };
-
-  const renderCategoryItem = ({ item }) => (
-    <TouchableOpacity style={styles.categoryItem} onPress={toggleCategories}>
-      <Text>{item.name}</Text>
-    </TouchableOpacity>
-  );
-
+  const navigation = useNavigation();
+  const [selectedIcon, setSelectedIcon] = useState("home");
+  const handleIconPress = (iconName) => {
+    setSelectedIcon(iconName);
+    // Các xử lý khác nếu cần
+  }; 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.column} onPress={toggleCategories}>
-        <Icon name="home" size={20} color="red" />
+      <TouchableOpacity
+        style={styles.column}
+        onPress={() => {
+          handleIconPress("home");
+          navigation.navigate("Home");
+        }}
+      >
+        <Icon
+          name="home"
+          size={20}
+          color={selectedIcon === "home" ? "red" : "#808a94"}
+        />
         <Text>Home</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.column} onPress={toggleCategories}>
-        <Icon name="bars" size={20} color="#808a94" />
-        <Text>Danh Mục</Text>
-      </TouchableOpacity>
-      <Modal
-        visible={showCategories}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={toggleCategories}
+      <TouchableOpacity
+        style={styles.column}
+        onPress={() => {
+          handleIconPress("bars");
+          navigation.navigate("Category");
+        }}
+        // Chuyển hướng đến màn hình "Home"
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.columnsContainer}>
-            <FlatList
-              data={categories}
-              renderItem={renderCategoryItem}
-              keyExtractor={(item) => item.id.toString()}
-              style={styles.categoryList}
-            />
-            <View style={styles.additionalContentContainer}>
-              <Text style={styles.textA}>{additionalContent}</Text>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        <Icon
+          name="bars"
+          size={20}
+          color={selectedIcon === "bars" ? "red" : "#808a94"}
+        />
+        <Text>Danh mục</Text>
+      </TouchableOpacity>
       <TouchableOpacity style={styles.column}>
         <Icon name="map-marker" size={20} color="#808a94" />
         <Text>Địa chỉ</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.column}>
-        <Icon name="user-circle-o" size={20} color="#808a94" />
+      <TouchableOpacity
+        style={styles.column}
+        onPress={() => {
+          handleIconPress("acount");
+          navigation.navigate("Acount");
+        }}
+      >
+        <Icon
+          name="user-circle-o"
+          size={20}
+          color={selectedIcon === "acount" ? "red" : "#808a94"}
+        />
         <Text>Tài khoản</Text>
       </TouchableOpacity>
     </View>

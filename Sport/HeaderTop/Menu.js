@@ -1,12 +1,17 @@
 import React from "react";
 import Icon from "react-native-vector-icons/FontAwesome";
-import { StyleSheet, Text, View, SafeAreaView } from "react-native";
+import { StyleSheet, TouchableOpacity, View, SafeAreaView } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 const MyMenu = () => {
+  const navigation = useNavigation();
+  const handleBack = () => {
+    navigation.goBack(); // Sử dụng phương thức goBack để quay lại màn hình trước đó
+  };
   return (
     <View style={styles.menu}>
-      <View style={styles.iconContainer}>
+      <TouchableOpacity onPress={handleBack} style={styles.iconContainer}>
         <Icon name="chevron-left" size={25} color="#000000" />
-      </View>
+      </TouchableOpacity>
     </View>
   );
 };
