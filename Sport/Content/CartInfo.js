@@ -14,8 +14,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { useNavigation } from "@react-navigation/native";
 import { CheckBox } from "react-native-elements";
+import axiosAPI from "../API/axiosAPI";
 
 const MyComponent = () => {
+  const imageUrl = axiosAPI.imageURL;
   const [cart, setCart] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const navigation = useNavigation();
@@ -72,7 +74,7 @@ const MyComponent = () => {
     const updatedCart = cart.map((cartItem) => {
       if (cartItem.id === item.id) {
         const newQuantity = (cartItem.quantity || 1) + 1;
-        const newTotalPrice = newQuantity * item.price;
+        const newTotalPrice = newQuantity * item.attributes.price;
         return {
           ...cartItem,
           quantity: newQuantity,
@@ -89,7 +91,7 @@ const MyComponent = () => {
     const updatedCart = cart.map((cartItem) => {
       if (cartItem.id === item.id && cartItem.quantity > 1) {
         const newQuantity = cartItem.quantity - 1;
-        const newTotalPrice = newQuantity * item.price;
+        const newTotalPrice = newQuantity * item.attributes.price;
         return {
           ...cartItem,
           quantity: newQuantity,
@@ -121,10 +123,16 @@ const MyComponent = () => {
         checked={selectedProducts.includes(item.id)}
         onPress={() => toggleSelectProduct(item.id)}
       />
-      <Image style={styles.productImage} resizeMode="contain" source={{ uri: item.image }} />
+      <Image
+        style={styles.productImage}
+        resizeMode="contain"
+        source={{ uri: imageUrl + image.attributes[0].url }}
+      />
       <View style={styles.productInfo}>
-        <Text style={styles.productTitle}>{item.title}</Text>
-        <Text style={styles.productPrice}>${item.price}</Text>
+        <Text style={styles.productTitle}>{item.attributes.productName}</Text>
+        <Text style={styles.priceText}>{`đ ${formatPrice(
+          product.attributes.price
+        )}`}</Text>
         <View style={styles.quantityContainer}>
           <TouchableOpacity
             onPress={() => handleDecreaseQuantity(item)}

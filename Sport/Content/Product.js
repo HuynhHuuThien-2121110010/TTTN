@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axiosAPI from "../API/axiosAPI";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { useNavigation } from "@react-navigation/native";
 import {
@@ -6,14 +7,16 @@ import {
   Image,
   View,
   Text,
-  Alert,
+  ImageBackground,
   FlatList,
   TouchableOpacity,
 } from "react-native";
-import Carousel from 'react-native-snap-carousel';
+import Carousel from "react-native-snap-carousel";
 import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
 const Product = () => {
+  const imageUrl = "http://172.16.0.89:1337";
   const [products, setProducts] = useState([]);
   const navigation = useNavigation();
   const [cart, setCart] = useState([]);
@@ -22,9 +25,8 @@ const Product = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("https://fakestoreapi.com/products");
-        const data = await response.json();
-        setProducts(data);
+        const result = await axiosAPI.get("products?populate=*");
+        setProducts(result.data.data); // Update this line
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu:", error);
       }
@@ -37,8 +39,12 @@ const Product = () => {
     // Chuyển đến trang chi tiết sản phẩm và truyền thông tin sản phẩm
     // Bạn cần import navigation từ thư viện bạn sử dụng (React Navigation chẳng hạn)
     // và đảm bảo rằng nó đã được cấu hình đúng trong ứng dụng của bạn.
-    navigation.navigate("ProductDetail", { product });
+    navigation.navigate("ProductDetail", {
+      productImage: product.attributes.image.data,
+      product,
+    });
   };
+
   const addToCart = async (item) => {
     try {
       const existingCart = await AsyncStorage.getItem("cart");
@@ -72,19 +78,28 @@ const Product = () => {
       console.error("Lỗi khi thêm sản phẩm vào giỏ hàng:", error);
     }
   };
+
   const handleShowMoreSpring = () => {
     setVisibleSpringItemCount(visibleSpringItemCount + 4);
   };
+
   const renderProductItem = ({ item }) => {
     const maxLength = 20;
     const truncatedTitle =
-      item.title.length > maxLength
-        ? item.title.substring(0, maxLength - 3) + "..."
-        : item.title;
+      item.attributes.productName.length > maxLength
+        ? item.attributes.productName.substring(0, maxLength - 3) + "..."
+        : item.attributes.productName;
+
     return (
       <TouchableOpacity onPress={() => handleProductPress(item)}>
         <View style={styles.productItem}>
-          <Image source={{ uri: item.image }} style={styles.image} />
+          <Image
+            source={{
+              uri: imageUrl + item.attributes.image.data[0].attributes.url,
+            }}
+            style={styles.image}
+          />
+
           <Text
             numberOfLines={2}
             ellipsizeMode="tail"
@@ -92,7 +107,9 @@ const Product = () => {
           >
             {truncatedTitle}
           </Text>
-          <Text style={styles.productPrice}>{`$${item.price}`}</Text>
+          <Text
+            style={styles.productPrice}
+          >{`${item.attributes.price} Đ`}</Text>
           <TouchableOpacity
             style={styles.addToCartButton}
             onPress={() => addToCart(item)} // Gọi hàm addToCart khi nhấn vào nút "Add to Cart"
@@ -117,20 +134,12 @@ const Product = () => {
           <Text style={styles.showMoreButtonText}>Xem thêm</Text>
         </TouchableOpacity>
       </View>
-      <View>
-        {visibleSpringItemCount < products.length && (
-          <TouchableOpacity
-            onPress={handleShowMoreSpring}
-            style={styles.showMoreButton}
-          ></TouchableOpacity>
-        )}
-        <FlatList
-          data={products.slice(0, visibleSpringItemCount)}
-          renderItem={renderProductItem}
-          keyExtractor={(item) => item.id.toString()}
-          horizontal
-        />
-      </View>
+      <FlatList
+        data={products.slice(0, visibleSpringItemCount)}
+        renderItem={renderProductItem}
+        keyExtractor={(item) => item.id.toString()}
+        horizontal
+      />
     </View>
   );
 };
@@ -142,12 +151,10 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   containerheader: {
-    flex: 1,
     flexDirection: "row",
-    marginTop: 5,
-  },
-  category: {
-    flex: 1,
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 10,
   },
   productItem: {
     margin: 10,
@@ -156,30 +163,36 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   showMoreButton: {
-    flex: 1,
     alignItems: "flex-end",
-    alignContent: "center",
   },
   showMoreButtonText: {
     marginTop: 7,
   },
   image: {
-    flex: 1,
-    padding: 2,
     width: 100,
     height: 100,
     resizeMode: "contain",
   },
-  //   flsale1: {
-  //     flex: 1,
-  //     width: 100,
-  //     height: 50,
-  //   },
-  //   flsale2: {
-  //     flex: 1,
-  //     alignItems: "center",
-  //     alignContent: "center",
-  //   },
+  productName: {
+    marginTop: 5,
+    marginHorizontal: 2,
+    fontSize: 14,
+    textAlign: "center",
+  },
+  productPrice: {
+    marginTop: 5,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  addToCartButton: {
+    backgroundColor: "#ee4e2e",
+    padding: 10,
+    marginVertical: 5,
+  },
+  addToCartButtonText: {
+    color: "white",
+    textAlign: "center",
+  },
 });
 
 export default Product;
