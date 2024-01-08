@@ -18,11 +18,29 @@ import {
 import Icon from "react-native-vector-icons/FontAwesome";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axiosAPI from "../API/axiosAPI";
+import Dialog, {
+  DialogContent,
+  SlideAnimation,
+} from "react-native-popup-dialog";
 import ApiUrl from "../API/ApiUrl";
+import CartModal from "../Component/CartModal";
+import ChatModal from "../Component/ChatModal";
 
 const ProductDetail = ({ route }) => {
   // const imageUrl = "http://172.16.0.89:1337";
+  const [cart, setCart] = useState([]);
   const navigation = useNavigation();
+  //-----------------------Mua ngay------------------
+  const [isPopupVisible, setPopupVisible] = useState(false);
+  const [selectedProductInfo, setSelectedProductInfo] = useState(null);
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const [isPaymentVisible, setPaymentVisible] = useState(false);
+  //-----------------------------------------
+  const [isChatModalVisible, setChatModalVisible] = useState(false);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [categoryNameToFilter, setCategoryNameToFilter] = useState("");
+  const [products, setProducts] = useState([]);
   const [swiperIndex, setSwiperIndex] = useState(0);
   const [scrollY] = useState(new Animated.Value(0));
   const [userRating, setUserRating] = useState(null);
@@ -31,7 +49,99 @@ const ProductDetail = ({ route }) => {
   const [customerReviews, setCustomerReviews] = useState([]);
   const [showShortenedDescription, setShowShortenedDescription] =
     useState(true);
+
   const { product, productImage } = route.params;
+  //---------Lấy sản phẩm liên quan---------------
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const result = await axiosAPI.put("products?populate=*");
+  //       setProducts(result.data.data);
+  //       console.log(result);
+  //       // console.log(result);
+  //       // Trích xuất tên danh mục từ sản phẩm hiện tại
+  //       const categoryNameToFilter =
+  //         route.params && route.params.product
+  //           ? route.params.product.attributes.categoryName
+  //           : "";
+  //       setCategoryNameToFilter(categoryNameToFilter);
+  //       console.log(product);
+  //     } catch (error) {
+  //       console.error("Lỗi khi lấy dữ liệu:", error);
+  //     }
+  //   };
+
+  //   fetchData();
+
+  // }, []); // Thêm route.params làm phụ thuộc
+
+  function filterByCategory(data, category) {
+    return data.filter((item) => item.categoryName === category);
+  }
+  const relatedProducts = filterByCategory(products, categoryNameToFilter);
+  //---------------------Mua ngay-----------------------------
+  const openPopup = () => {
+    const price = product.attributes.price * quantity;
+    setTotalPrice(price);
+
+    setSelectedProductInfo({
+      image: productImage[swiperIndex].attributes.url,
+      productName: product.attributes.productName,
+      quantity: quantity,
+      // Thêm các thông tin khác của sản phẩm nếu cần
+    });
+    setPopupVisible(true);
+  };
+
+  const closePopup = () => {
+    setPopupVisible(false);
+  };
+  const handlePayment = () => {
+    // Thực hiện logic thanh toán ở đây
+    console.log("Thực hiện thanh toán");
+    // Đóng pop-up sau khi thanh toán thành công hoặc theo logic của bạn
+    closePopup();
+  };
+  const increaseQuantity = () => {
+    setQuantity((prevQuantity) => prevQuantity + 1);
+    updateTotalPrice();
+  };
+
+  const decreaseQuantity = () => {
+    if (quantity > 1) {
+      setQuantity((prevQuantity) => prevQuantity - 1);
+      updateTotalPrice();
+    }
+  };
+  const updateTotalPrice = () => {
+    const newTotalPrice = product.attributes.price * quantity;
+    setTotalPrice(newTotalPrice);
+  };
+  const handleCheckout = () => {
+    // Xử lý thanh toán ở đây
+    // Ví dụ: Chuyển đến màn hình thanh toán
+    navigation.navigate("CheckOut");
+    closePopup();
+  };
+  //--------------------------thêm vào giỏ----------------
+  const openModal = () => {
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+  };
+
+  //------------End thêm vào giỏ-------------------
+  const openChatModal = () => {
+    setChatModalVisible(true);
+  };
+
+  // Hàm đóng ChatModal
+  const closeChatModal = () => {
+    setChatModalVisible(false);
+  };
+  //------------End Chat-------------------
   useEffect(() => {
     const interval = setInterval(() => {
       if (swiperIndex < productImage.length - 1) {
@@ -46,14 +156,8 @@ const ProductDetail = ({ route }) => {
   useEffect(() => {
     const fetchFavoriteStatus = async () => {
       try {
-        // Lấy trạng thái yêu thích của sản phẩm cụ thể từ AsyncStorage
         const storedFavoriteStatus = await AsyncStorage.getItem(
           `favoriteStatus_${product.id}`
-        );
-
-        console.log(
-          `Stored Favorite Status for Product ${product.id}:`,
-          storedFavoriteStatus
         );
 
         if (storedFavoriteStatus !== null) {
@@ -71,7 +175,6 @@ const ProductDetail = ({ route }) => {
       setSwiperIndex(swiperIndex - 1);
     }
   };
-
   const handleNext = () => {
     if (swiperIndex < productImage.length - 1) {
       setSwiperIndex(swiperIndex + 1);
@@ -101,9 +204,6 @@ const ProductDetail = ({ route }) => {
   const goBack = () => {
     navigation.goBack();
   };
-  useEffect(() => {
-    console.log("scrollY value:", scrollY);
-  }, [scrollY]);
 
   const renderBackButton = () => {
     const opacity = scrollY.interpolate({
@@ -130,44 +230,6 @@ const ProductDetail = ({ route }) => {
     // Cập nhật đánh giá của người dùng
     setUserRating(newReview);
   };
-  const relatedProducts = [
-    {
-      id: 1,
-      title: "Sản phẩm liên quan 1",
-      price: 200000,
-      image:
-        "https://beyono.vn/wp-content/uploads/2023/05/z3942912201572-6562199a36aa2b79ceb66fabb9755aec.webp",
-    },
-    {
-      id: 2,
-      title: "Sản phẩm liên quan 2",
-      price: 250000,
-      image:
-        "https://beyono.vn/wp-content/uploads/2023/05/z3942912201572-6562199a36aa2b79ceb66fabb9755aec.webp",
-    },
-    {
-      id: 3,
-      title: "Sản phẩm liên quan 2",
-      price: 250000,
-      image:
-        "https://beyono.vn/wp-content/uploads/2023/05/z3942912201572-6562199a36aa2b79ceb66fabb9755aec.webp",
-    },
-    {
-      id: 4,
-      title: "Sản phẩm liên quan 2",
-      price: 250000,
-      image:
-        "https://beyono.vn/wp-content/uploads/2023/05/z3942912201572-6562199a36aa2b79ceb66fabb9755aec.webp",
-    },
-    {
-      id: 5,
-      title: "Sản phẩm liên quan 2",
-      price: 250000,
-      image:
-        "https://beyono.vn/wp-content/uploads/2023/05/z3942912201572-6562199a36aa2b79ceb66fabb9755aec.webp",
-    },
-    // Thêm các sản phẩm liên quan khác nếu cần
-  ];
   const formatPrice = (price) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
@@ -176,13 +238,19 @@ const ProductDetail = ({ route }) => {
     console.log("Chat ngay");
   };
   const handleAddToCart = () => {
-    // Xử lý khi người dùng nhấn vào nút "Thêm vào giỏ hàng"
-    console.log("Thêm vào giỏ hàng");
+    openModal();
   };
 
   const handleBuyNow = () => {
-    // Xử lý khi người dùng nhấn vào nút "Mua ngay"
-    console.log("Mua ngay");
+    navigation.navigate("CheckOut", {
+      productInfo: {
+        image: selectedProductInfo.image,
+        productName: selectedProductInfo.productName,
+        price: totalPrice,
+        quantity: quantity,
+      },
+    });
+    closePopup();
   };
   const shareProduct = () => {
     // Sử dụng React Native Share API để chia sẻ thông tin sản phẩm
@@ -197,9 +265,11 @@ const ProductDetail = ({ route }) => {
   const toggleDescription = () => {
     setShowShortenedDescription(!showShortenedDescription);
   };
-
   return (
     <View style={styles.container}>
+      <TouchableOpacity style={styles.backButton} onPress={goBack}>
+        <Icon name="arrow-left" size={24} color="black" />
+      </TouchableOpacity>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -209,9 +279,6 @@ const ProductDetail = ({ route }) => {
         )}
         scrollEventThrottle={16}
       >
-        <TouchableOpacity style={styles.backButton} onPress={goBack}>
-          <Icon name="arrow-left" size={24} color="black" />
-        </TouchableOpacity>
         <Swiper
           style={styles.swiper}
           loop={false}
@@ -294,26 +361,77 @@ const ProductDetail = ({ route }) => {
           style={{ marginHorizontal: 5 }}
           contentContainerStyle={styles.scrollContent}
         >
-          <RelatedProducts relatedProducts={relatedProducts} />
+          <RelatedProducts data={relatedProducts} />
         </ScrollView>
       </ScrollView>
       <View style={styles.buttonContainer}>
-        {/* Nút "Chat ngay" */}
-        <View style={styles.buttonfooter}>
-          <TouchableOpacity style={styles.button} onPress={handleChatNow}>
-            <Text style={styles.buttonText}>Chat ngay</Text>
-          </TouchableOpacity>
-
-          {/* Nút "Thêm vào giỏ hàng" */}
-          <TouchableOpacity style={styles.button} onPress={handleAddToCart}>
-            <Text style={styles.buttonText}>Thêm vào giỏ hàng</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Nút "Mua ngay" */}
-        <TouchableOpacity style={styles.button} onPress={handleBuyNow}>
+        <TouchableOpacity style={styles.button} onPress={openChatModal}>
+          <Text style={styles.buttonText}>Chat ngay</Text>
+        </TouchableOpacity>
+        {/* Hiển thị ChatModal */}
+        <ChatModal isVisible={isChatModalVisible} closeModal={closeChatModal} />
+        <TouchableOpacity style={styles.button} onPress={handleAddToCart}>
+          <Text style={styles.buttonText}>Thêm vào giỏ hàng</Text>
+        </TouchableOpacity>
+        {/* Hiển thị Modal */}
+        <CartModal
+          isVisible={isModalVisible}
+          closeModal={closeModal}
+          product={route.params.product}
+          setCart={setCart}
+        />
+        <TouchableOpacity style={styles.button} onPress={openPopup}>
           <Text style={styles.buttonText}>Mua ngay</Text>
         </TouchableOpacity>
+        {/* Pop-up hiển thị thông tin sản phẩm khi người dùng nhấn "Mua ngay" */}
+        <Dialog
+          visible={isPopupVisible}
+          dialogAnimation={new SlideAnimation({ slideFrom: "bottom" })}
+          onTouchOutside={closePopup}
+        >
+          <DialogContent style={styles.popupContent}>
+            <Image
+              source={{
+                uri:
+                  ApiUrl.imageURL +
+                  product.attributes.image.data[0].attributes.url,
+              }}
+              style={styles.popupImage}
+            />
+            <Text style={styles.popupText}>
+              {selectedProductInfo?.productName}
+            </Text>
+            <View style={styles.quantityContainer}>
+              <TouchableOpacity
+                onPress={decreaseQuantity}
+                style={styles.quantityButton}
+              >
+                <Icon name="minus" size={10} color="white" />
+              </TouchableOpacity>
+              <Text style={styles.quantityText}>{quantity}</Text>
+              <TouchableOpacity
+                onPress={increaseQuantity}
+                style={styles.quantityButton}
+              >
+                <Icon name="plus" size={10} color="white" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.popupText}>Tổng giá: ${totalPrice}</Text>
+            {/* Thêm các thông tin khác của sản phẩm nếu cần */}
+            <TouchableOpacity
+              onPress={handleBuyNow}
+              style={styles.popupPayButton}
+            >
+              <Text style={{ color: "white" }}>Thanh toán</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={closePopup}
+              style={styles.popupCloseButton}
+            >
+              <Text style={styles.popupCloseButtonText}>✕</Text>
+            </TouchableOpacity>
+          </DialogContent>
+        </Dialog>
       </View>
     </View>
   );
@@ -326,17 +444,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#f2f2f2",
     flexDirection: "column",
   },
-  buttonfooter: {},
   scrollView: {
     flex: 3,
   },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
+    margin: 10,
   },
   button: {
-    backgroundColor: "#3498db",
+    backgroundColor: "#2f486e",
     padding: 10,
     borderRadius: 5,
     flex: 1,
@@ -346,13 +462,10 @@ const styles = StyleSheet.create({
     height: 400, // Điều chỉnh kích thước swiper theo ý muốn
   },
   buttonText: {
+    flexDirection: "row",
     color: "#fff",
     textAlign: "center",
     alignContent: "center",
-  },
-  buttonContainer: {
-    flex: 0.075,
-    flexDirection: "row",
   },
   description: {
     marginHorizontal: 5,
@@ -365,7 +478,7 @@ const styles = StyleSheet.create({
   price: {
     padding: 15,
     marginVertical: 5,
-    backgroundColor: "#ee4e2e",
+    backgroundColor: "#2f486e",
   },
   rating: {
     flexDirection: "row",
@@ -381,6 +494,9 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     textAlign: "left",
     fontSize: 20,
+  },
+  buttonfooter: {
+    flexDirection: "column",
   },
   image: {
     width: "100%",
@@ -406,7 +522,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   showMoreButtonText: {
-    color: "blue",
+    color: "#2f486e",
     marginRight: 5,
   },
   backButton: {
@@ -414,6 +530,58 @@ const styles = StyleSheet.create({
     top: 15,
     left: 13,
     zIndex: 1,
+  },
+  //-----Mua ngay-------
+  popupContent: {
+    padding: 20,
+    backgroundColor: "#fff",
+    alignItems: "center",
+  },
+  popupImage: {
+    width: 200,
+    height: 200,
+    resizeMode: "contain",
+    marginBottom: 10,
+  },
+  popupText: {
+    fontSize: 18,
+    marginBottom: 10,
+  },
+  popupPayButton: {
+    backgroundColor: "#2f486e",
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  popupCloseButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    padding: 10,
+  },
+  popupCloseButtonText: {
+    color: "#000000",
+    fontSize: 18,
+  },
+  quantityContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  quantityButton: {
+    backgroundColor: "#2f486e",
+    padding: 8,
+    margin: 5,
+    borderRadius: 5,
+  },
+  quantityButtonText: {
+    color: "#2f486e",
+    fontSize: 18,
+  },
+  quantityText: {
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });
 

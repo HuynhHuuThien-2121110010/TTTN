@@ -7,11 +7,13 @@ import {
   StyleSheet,
   Image,
 } from "react-native";
+
 import { useNavigation } from "@react-navigation/native";
 import ApiUrl from "../API/ApiUrl";
 
-const PaymentForm = ({ route }) => {
-  const { productInfo,cart } = route.params;
+const PaymentForm = () => {
+  const route = useRoute();
+  const { productInfo } = route.params;
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("cash"); // Giả sử "cash" là phương thức thanh toán mặc định
   const navigation = useNavigation();
   const [fullName, setFullName] = useState("");
@@ -23,7 +25,7 @@ const PaymentForm = ({ route }) => {
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   });
-console.log(cart,productInfo)
+
   const formatPrice = (price) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };

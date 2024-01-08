@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import Content from "./Component/Content";
 import Footer from "./Component/Footer";
@@ -8,6 +8,7 @@ import ProductDetail from "./Content/ProductDetail";
 import Acount from "./Content/Acount";
 import Category from "./Content/Category";
 import CheckOut from "./Content/CheckOut";
+import CheckOutCart from "./Content/CheckOutCart";
 import Cart from "./Content/CartInfo";
 import Toast from "react-native-toast-message";
 import { NavigationContainer } from "@react-navigation/native";
@@ -15,13 +16,19 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { useNavigation } from "@react-navigation/native";
 import { TouchableOpacity } from "react-native";
+import LoginScreen from "./Component/LoginScreen";
+import RegisterScreen from "./Component/RegisterScreen";
 const Stack = createStackNavigator();
 const HomeScreen = () => {
+  const [myData, setMyData] = useState("Dữ liệu của tôi");
   const navigation = useNavigation();
 
   const handleNavigationStateChange = (state) => {
     const currentRouteName = state.routes[state.index].name;
-
+    const handleClearData = () => {
+      // Xóa dữ liệu bằng cách cập nhật giá trị thành null
+      setMyData(null);
+    };
     // Ẩn Footer khi trang hiện tại là ProductDetail
     if (currentRouteName === "ProductDetail") {
       navigation.setOptions({
@@ -63,9 +70,12 @@ export default function App() {
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Category" component={Category} />
           <Stack.Screen name="CheckOut" component={CheckOut} />
+          <Stack.Screen name="CheckOutCart" component={CheckOutCart} />
           <Stack.Screen name="Cart" component={Cart} />
           <Stack.Screen name="ProductDetail" component={ProductDetail} />
           <Stack.Screen name="Acount" component={Acount} />
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Register" component={RegisterScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       <Toast ref={(ref) => Toast.setRef(ref)} />

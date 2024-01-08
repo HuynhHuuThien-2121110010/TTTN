@@ -7,22 +7,21 @@ import {
   Image,
   View,
   Text,
-  ImageBackground,
   FlatList,
   TouchableOpacity,
 } from "react-native";
 import Carousel from "react-native-snap-carousel";
 import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import ApiUrl from "../API/ApiUrl";
 
 const Product = () => {
-  const imageUrl = "http://172.16.0.89:1337";
   const [products, setProducts] = useState([]);
   const navigation = useNavigation();
   const [cart, setCart] = useState([]);
   const [visibleSpringItemCount, setVisibleSpringItemCount] = useState(5);
 
-  useEffect(() => {
+  useEffect(() => { 
     const fetchData = async () => {
       try {
         const result = await axiosAPI.get("products?populate=*");
@@ -95,7 +94,8 @@ const Product = () => {
         <View style={styles.productItem}>
           <Image
             source={{
-              uri: imageUrl + item.attributes.image.data[0].attributes.url,
+              uri:
+                ApiUrl.imageURL + item.attributes.image.data[0].attributes.url,
             }}
             style={styles.image}
           />
@@ -114,7 +114,7 @@ const Product = () => {
             style={styles.addToCartButton}
             onPress={() => addToCart(item)} // Gọi hàm addToCart khi nhấn vào nút "Add to Cart"
           >
-            <Text style={styles.addToCartButtonText}>Add to Cart</Text>
+            <Text style={styles.addToCartButtonText}>Thêm vào giỏ</Text>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -188,6 +188,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#ee4e2e",
     padding: 10,
     marginVertical: 5,
+    marginHorizontal:3,
   },
   addToCartButtonText: {
     color: "white",

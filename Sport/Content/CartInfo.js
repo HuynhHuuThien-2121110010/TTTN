@@ -15,9 +15,9 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import { useNavigation } from "@react-navigation/native";
 import { CheckBox } from "react-native-elements";
 import axiosAPI from "../API/axiosAPI";
+import ApiUrl from "../API/ApiUrl";
 
 const MyComponent = () => {
-  const imageUrl = axiosAPI.imageURL;
   const [cart, setCart] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const navigation = useNavigation();
@@ -49,11 +49,15 @@ const MyComponent = () => {
     );
     setCartItemCount(totalAmount);
   };
-
+  const formatPrice = (price) => {
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
   const handleCheckout = () => {
-    // Xử lý thanh toán ở đây
-    // Ví dụ: Chuyển đến màn hình thanh toán
-    navigation.navigate("CheckOut");
+    // Chuyển dữ liệu giỏ hàng và sản phẩm đã chọn sang màn hình CheckOut
+    navigation.navigate("CheckOut", {
+      cart: cart,
+      selectedProducts: selectedProducts,
+    });
   };
   const toggleSelectProduct = (productId) => {
     const updatedSelectedProducts = selectedProducts.includes(productId)
@@ -126,12 +130,14 @@ const MyComponent = () => {
       <Image
         style={styles.productImage}
         resizeMode="contain"
-        source={{ uri: imageUrl + image.attributes[0].url }}
+        source={{
+          uri: ApiUrl.imageURL + item.attributes.image.data[0].attributes.url,
+        }}
       />
       <View style={styles.productInfo}>
         <Text style={styles.productTitle}>{item.attributes.productName}</Text>
         <Text style={styles.priceText}>{`đ ${formatPrice(
-          product.attributes.price
+          item.attributes.price
         )}`}</Text>
         <View style={styles.quantityContainer}>
           <TouchableOpacity
@@ -149,7 +155,7 @@ const MyComponent = () => {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.totalPrice}>Tổng giá: {item.totalPrice}$</Text>
+        <Text style={styles.totalPrice}>Tổng giá: {item.totalPrice} đ</Text>
       </View>
       <TouchableOpacity
         onPress={() => handleRemoveItem(item)}
@@ -196,7 +202,9 @@ const MyComponent = () => {
       {cart.length > 0 && (
         <View style={styles.totalContainer}>
           <Text style={styles.totalText}>Thành Tiền:</Text>
-          <Text style={styles.totalAmount}>${totalAmount}</Text>
+          <Text style={styles.totalAmount}>{`đ ${formatPrice(
+            totalAmount
+          )}`}</Text>
         </View>
       )}
       {cart.length > 0 && (
