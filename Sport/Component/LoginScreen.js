@@ -21,7 +21,8 @@ const LoginScreen = () => {
     const fetchData = async () => {
       try {
         const result = await axiosAPI.get("users?populate=*");
-        setUsers(result.data.data); // Update this line
+        setUsers(result.data); // Update this line
+        console.log(users);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu:", error);
       }
@@ -51,8 +52,23 @@ const LoginScreen = () => {
         console.log("Đăng nhập thành công!");
         // Điều hướng đến màn hình chính (cập nhật với tuyến đường điều hướng thực tế của bạn)
         navigation.navigate("Home");
+        Toast.show({
+          type: "success",
+          position: "top",
+          text1: "Thông báo",
+          text2: "Đăng Nhập Thành Công",
+          visibilityTime: 2000,
+        });
+        return;
       } else {
-        console.error("Tên đăng nhập hoặc mật khẩu không đúng.");
+        Toast.show({
+          type: "error",
+          position: "top",
+          text1: "Thông báo",
+          text2: "Tên đăng nhập hoặc mật khẩu không đúng",
+          visibilityTime: 2000,
+        });
+        return;
         // Xử lý thông tin đăng nhập không đúng (ví dụ: hiển thị thông báo lỗi)
       }
     } catch (error) {

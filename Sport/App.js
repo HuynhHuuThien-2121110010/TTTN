@@ -46,9 +46,9 @@ const HomeScreen = () => {
         <View style={styles.header}>
           <Header />
         </View>
-        <View style={styles.search}>
+        {/* <View style={styles.search}>
           <Search />
-        </View>
+        </View> */}
         <View style={styles.content}>
           <Content />
         </View>

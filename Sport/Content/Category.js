@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Modal,
   FlatList,
+  TextInput,
   Image,
   TouchableWithoutFeedback,
 } from "react-native";
@@ -18,6 +19,7 @@ import ListHeader from "./ListHeader";
 const MyComponent = () => {
   const [productData, setProductData] = useState([]);
   const navigation = useNavigation();
+  const [searchInput, setSearchInput] = useState("");
   const [categoriesData, setCategoriesData] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedSort, setSelectedSort] = useState("price_asc");
@@ -76,8 +78,11 @@ const MyComponent = () => {
     });
   };
   //---------------Lọc--------------
+  const handleSearch = (text) => {
+    setSearchInput(text);
+  };
+  //-----------Tìm Kiếm-----------
   const renderCategoriesDropdown = () => {
-    console.log(selectedCategory);
     return (
       <Modal
         animationType="slide"
@@ -92,15 +97,15 @@ const MyComponent = () => {
         >
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
-            <TouchableOpacity
-              onPress={() => {
-                setSelectedCategory(null);
-                setModalVisible(!modalVisible);
-              }}
-              style={styles.modalItem}
-            >
-              <Text style={{ marginLeft: 15 }}>Tất cả danh mục</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedCategory(null);
+                  setModalVisible(!modalVisible);
+                }}
+                style={styles.modalItem}
+              >
+                <Text style={{ marginLeft: 15 }}>Tất cả danh mục</Text>
+              </TouchableOpacity>
               <FlatList
                 data={categoriesData}
                 keyExtractor={(item) => item.id.toString()}
@@ -126,6 +131,14 @@ const MyComponent = () => {
   };
   return (
     <View style={styles.container}>
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Tìm kiếm..."
+          value={searchInput}
+          onChangeText={handleSearch}
+        />
+      </View>
       <TouchableOpacity style={styles.backButton} onPress={goBack}>
         <Icon name="arrow-left" size={24} color="black" />
       </TouchableOpacity>
@@ -160,8 +173,12 @@ const MyComponent = () => {
       <FlatList
         data={productData.filter(
           (item) =>
-            selectedCategory === null ||
-            item.attributes.category.data.id === selectedCategory
+            (selectedCategory === null ||
+              item.attributes.category.data.id === selectedCategory) &&
+            (searchInput === "" ||
+              item.attributes.productName
+                .toLowerCase()
+                .includes(searchInput.toLowerCase()))
         )}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
@@ -216,6 +233,18 @@ const styles = StyleSheet.create({
   picker: {
     flex: 1,
     marginRight: 10,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    paddingHorizontal: 10,
+    marginTop: 50, // Thêm thuộc tính marginTop để thụt xuống
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    borderColor: "gray",
+    borderWidth: 1,
+    paddingHorizontal: 10,
   },
   productContainer: {
     width: "48%", // Sử dụng chiều rộng tương đối để chứa 2 sản phẩm trong một dòng
