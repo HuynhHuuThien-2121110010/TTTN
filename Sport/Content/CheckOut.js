@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,27 +6,25 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import ApiUrl from "../API/ApiUrl";
+import MapView, { Marker } from "react-native-maps";
 
 const PaymentForm = ({ route }) => {
-  const { productInfo,cart } = route.params;
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("cash"); // Giả sử "cash" là phương thức thanh toán mặc định
+  const { productInfo, selectedProducts } = route.params;
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("cash");
   const navigation = useNavigation();
   const [fullName, setFullName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");
-  const [region, setRegion] = useState({
-    latitude: 37.78825, // Địa điểm mặc định
-    longitude: -122.4324,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-  });
-console.log(cart,productInfo)
+  const [totalAmount, setTotalAmount] = useState(0);
+
   const formatPrice = (price) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
+
   const limitString = (str, maxLength) => {
     if (str.length <= maxLength) {
       return str;
@@ -35,39 +33,88 @@ console.log(cart,productInfo)
     }
   };
 
+  useEffect(() => {
+    let totalPrice = 0;
+
+    if (productInfo) {
+      totalPrice += productInfo.quantity * productInfo.price;
+    }
+
+    if (Array.isArray(selectedProducts)) {
+      selectedProducts.forEach((item) => {
+        totalPrice += item.quantity * item.attributes.price;
+      });
+    }
+
+    setTotalAmount(totalPrice);
+  }, [productInfo, selectedProducts]);
+
   const handleOrder = () => {
-    // Xử lý đặt hàng ở đây
-    // Ví dụ: Kiểm tra thông tin và thực hiện đặt hàng
     alert(
       `Đặt hàng thành công! Phương thức thanh toán: ${selectedPaymentMethod}`
     );
   };
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text>Thông tin sản phẩm</Text>
-        <View style={styles.cartItem}>
-          <Image
-            style={styles.productImage}
-            resizeMode="contain"
-            source={{
-              uri: ApiUrl.imageURL + productInfo.image,
-            }}
-          />
-          <View style={styles.productInfo}>
-            <Text style={styles.productTitle}>
-              {limitString(productInfo.productName, 30)}
-            </Text>
-            <View style={styles.quantityContainer}>
-              <Text style={styles.quantityText}>
-                Số lượng: {productInfo.quantity}
+      <ScrollView style={styles.scrollView}>
+        {/* Các thông tin sản phẩm */}
+        <Text style={{ textAlign: "center" }}>Thông tin sản phẩm</Text>
+        {productInfo && (
+          <View style={styles.cartItem}>
+            <Image
+              style={styles.productImage}
+              resizeMode="contain"
+              source={{
+                uri: ApiUrl.imageURL + productInfo.image,
+              }}
+            />
+            <View style={styles.productInfo}>
+              <Text style={styles.productTitle}>
+                {limitString(productInfo.productName, 30)}
+              </Text>
+              <View style={styles.quantityContainer}>
+                <Text style={styles.quantityText}>
+                  Số lượng: {productInfo.quantity}
+                </Text>
+              </View>
+              <Text style={styles.priceText}>
+                Thành tiền: {`đ ${formatPrice(productInfo.price)}`}
               </Text>
             </View>
-            <Text style={styles.priceText}>
-              Thành tiền: {`đ ${formatPrice(productInfo.price)}`}
-            </Text>
           </View>
-        </View>
+        )}
+
+        {/* Danh sách sản phẩm đã chọn */}
+        {Array.isArray(selectedProducts) &&
+          selectedProducts.map((item, index) => (
+            <View key={index} style={styles.cartItem}>
+              <Image
+                style={styles.productImage}
+                resizeMode="contain"
+                source={{
+                  uri:
+                    ApiUrl.imageURL +
+                    item.attributes.image.data[0].attributes.url,
+                }}
+              />
+              <View style={styles.productInfo}>
+                <Text style={styles.productTitle}>
+                  {limitString(item.attributes.productName, 30)}
+                </Text>
+                <View style={styles.quantityContainer}>
+                  <Text style={styles.quantityText}>
+                    Số lượng: {item.quantity}
+                  </Text>
+                </View>
+                <Text style={styles.priceText}>
+                  Thành tiền: {`đ ${formatPrice(item.attributes.price)}`}
+                </Text>
+              </View>
+            </View>
+          ))}
+
+        {/* Các TextInput và các phần còn lại của mã JSX */}
         <Text style={styles.label}>Họ và tên người nhận: </Text>
         <TextInput
           style={styles.input}
@@ -85,14 +132,17 @@ console.log(cart,productInfo)
           onChangeText={(text) => setPhoneNumber(text)}
         />
 
-        <Text style={styles.label}>Địa chỉ: </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nhập địa chỉ"
-          value={address}
-          onChangeText={(text) => setAddress(text)}
-        />
+        <Text style={styles.label}>Địa chỉ: {address}</Text>
 
+        <Text style={styles.label}>
+          Tổng giá: {`đ ${formatPrice(totalAmount)}`}
+        </Text>
+        <Text style={styles.label}>Mã giảm:</Text>
+        <Text style={styles.label}>Phí vận chuyển:</Text>
+        <Text style={styles.label}>Thành Tiền:</Text>
+      </ScrollView>
+      {/* Nút đặt hàng và quay lại */}
+      <View style={styles.buy}>
         <TouchableOpacity style={styles.button} onPress={handleOrder}>
           <Text style={styles.buttonText}>Đặt hàng</Text>
         </TouchableOpacity>
@@ -113,11 +163,32 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 15,
   },
+  buy: {
+    flexDirection: "row",
+  },
+  mapButton: {
+    backgroundColor: "#be1e2d",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  map: {
+    height: 200,
+    borderRadius: 8,
+    overflow: "hidden",
+    marginTop: 10,
+  },
   cartItem: {
     flexDirection: "row",
     justifyContent: "flex-start",
     alignItems: "center",
-    backgroundColor: "#fff", // Thêm màu nền để phân biệt các sản phẩm
+    backgroundColor: "#fff",
     padding: 10,
     borderRadius: 8,
     shadowColor: "#000",
@@ -125,7 +196,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-    marginTop: 10, // Thay đổi giá trị này nếu cần
+    marginTop: 10,
     marginLeft: 2,
     marginRight: 2,
   },
@@ -149,18 +220,16 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: "#be1e2d",
     padding: 15,
+    marginRight: 5,
+    flex: 1,
     borderRadius: 8,
     alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
   },
   backButton: {
     backgroundColor: "#ccc",
     padding: 15,
-    marginTop: 5,
+    flex: 1,
+    marginLeft: 5,
     borderRadius: 8,
     alignItems: "center",
   },

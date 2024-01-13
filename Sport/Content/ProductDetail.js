@@ -25,11 +25,13 @@ import Dialog, {
 import ApiUrl from "../API/ApiUrl";
 import CartModal from "../Component/CartModal";
 import ChatModal from "../Component/ChatModal";
+import { useAuth } from "../Content/AuthContext";
 
 const ProductDetail = ({ route }) => {
   // const imageUrl = "http://172.16.0.89:1337";
   const [cart, setCart] = useState([]);
   const navigation = useNavigation();
+  const { authenticated, userInfo } = useAuth();
   //-----------------------Mua ngay------------------
   const [isPopupVisible, setPopupVisible] = useState(false);
   const [selectedProductInfo, setSelectedProductInfo] = useState(null);
@@ -40,7 +42,7 @@ const ProductDetail = ({ route }) => {
   const [isChatModalVisible, setChatModalVisible] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [categoryNameToFilter, setCategoryNameToFilter] = useState("");
-  const [products, setProducts] = useState([]);
+  const [productData, setProductData] = useState([]);
   const [swiperIndex, setSwiperIndex] = useState(0);
   const [scrollY] = useState(new Animated.Value(0));
   const [userRating, setUserRating] = useState(null);
@@ -51,34 +53,29 @@ const ProductDetail = ({ route }) => {
     useState(true);
 
   const { product, productImage } = route.params;
-  //---------Lấy sản phẩm liên quan---------------
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const result = await axiosAPI.put("products?populate=*");
-  //       setProducts(result.data.data);
-  //       console.log(result);
-  //       // console.log(result);
-  //       // Trích xuất tên danh mục từ sản phẩm hiện tại
-  //       const categoryNameToFilter =
-  //         route.params && route.params.product
-  //           ? route.params.product.attributes.categoryName
-  //           : "";
-  //       setCategoryNameToFilter(categoryNameToFilter);
-  //       console.log(product);
-  //     } catch (error) {
-  //       console.error("Lỗi khi lấy dữ liệu:", error);
-  //     }
-  //   };
+  //  ---------Lấy sản phẩm liên quan---------------
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const result = await axiosAPI.get("products?populate=*");
+        setProductData(result.data.data);
+        setCategoryNameToFilter(route.params.attributes);
+      } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu:", error);
+      }
+    };
 
-  //   fetchData();
-
-  // }, []); // Thêm route.params làm phụ thuộc
-
+    fetchData();
+  }, []); // Thêm route.params làm phụ thuộc
+  //-----------------------------------------------------
+  const relatedProducts = filterByCategory(productData, categoryNameToFilter);
+  useEffect(() => {
+    setCategoryNameToFilter(product.categoryName); // hoặc bất kỳ thuộc tính nào của sản phẩm bạn muốn sử dụng để lọc sản phẩm liên quan
+  }, [route.params]);
+  //----------------------------------------
   function filterByCategory(data, category) {
     return data.filter((item) => item.categoryName === category);
   }
-  const relatedProducts = filterByCategory(products, categoryNameToFilter);
   //---------------------Mua ngay-----------------------------
   const openPopup = () => {
     const price = product.attributes.price * quantity;
@@ -238,6 +235,10 @@ const ProductDetail = ({ route }) => {
     console.log("Chat ngay");
   };
   const handleAddToCart = () => {
+    if (!authenticated) {
+      navigation.navigate("Acount");
+      return;
+    }
     openModal();
   };
 
@@ -304,7 +305,7 @@ const ProductDetail = ({ route }) => {
           <Text style={styles.titleText}>{product.attributes.productName}</Text>
         </View>
         <View style={styles.rating}>
-          {product.rating ? (
+          {productData.rating ? (
             <>
               <Rating rating={product.rating} />
               <Text style={{ marginHorizontal: 3, marginRight: 3 }}>

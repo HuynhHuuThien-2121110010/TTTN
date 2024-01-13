@@ -11,24 +11,49 @@ import {
 import Toast from "react-native-toast-message";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/FontAwesome";
+import { useAuth } from "../Content/AuthContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 const LoginScreen = () => {
   const navigation = useNavigation();
+  const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [users, setUsers] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
+  //----------------------
   useEffect(() => {
-    const fetchData = async () => {
+    const checkLoginStatus = async () => {
       try {
-        const result = await axiosAPI.get("users?populate=*");
-        setUsers(result.data); // Update this line
-        console.log(users);
+        // Kiểm tra trạng thái đăng nhập
+        const userDataString = await AsyncStorage.getItem("userData");
+
+        if (userDataString) {
+          // Nếu có dữ liệu người dùng, set lại trạng thái đăng nhập ở đây
+          const userData = JSON.parse(userDataString);
+          login(userData);
+        }
       } catch (error) {
-        console.error("Lỗi khi lấy dữ liệu:", error);
+        console.error("Lỗi khi kiểm tra trạng thái đăng nhập:", error);
       }
     };
-    fetchData();
+
+    // Gọi hàm kiểm tra trạng thái đăng nhập khi component được mount
+    checkLoginStatus();
   }, []);
+  //-----------------------
+  const fetchData = async () => {
+    try {
+      const result = await axiosAPI.post("auth/local", {
+        identifier: username,
+        password: password,
+      });
+
+      // Xử lý dữ liệu từ API theo nhu cầu của bạn
+      console.log("Dữ liệu người dùng:", result.data);
+    } catch (error) {
+      console.error("Lỗi khi lấy dữ liệu:", error);
+    }
+  };
   const handleLogin = async () => {
     // Kiểm tra xem tên đăng nhập và mật khẩu có được nhập không
     if (!username || !password) {
@@ -43,15 +68,18 @@ const LoginScreen = () => {
     }
 
     try {
-      console.log("Dữ liệu người dùng:", users);
-      // Tìm người dùng với tên đăng nhập đã nhập
-      const user = users.find((user) => user.username === username);
-      console.log("Thông tin người dùng:", user);
-      // Kiểm tra xem người dùng có được tìm thấy và mật khẩu có đúng không
-      if (user && user.password === password) {
-        console.log("Đăng nhập thành công!");
-        // Điều hướng đến màn hình chính (cập nhật với tuyến đường điều hướng thực tế của bạn)
+      const result = await axiosAPI.post("auth/local", {
+        identifier: username,
+        password: password,
+      });
+
+      // Kiểm tra phản hồi từ API
+      if (result.data && result.data.jwt) {
+        await AsyncStorage.setItem("userData", JSON.stringify(result.data));
+        login(result.data);
+        // Thực hiện chuyển hướng trang
         navigation.navigate("Home");
+        console.log(result.data);
         Toast.show({
           type: "success",
           position: "top",
@@ -59,6 +87,10 @@ const LoginScreen = () => {
           text2: "Đăng Nhập Thành Công",
           visibilityTime: 2000,
         });
+
+        // Gọi fetchData chỉ khi đăng nhập thành công
+        fetchData();
+
         return;
       } else {
         Toast.show({
@@ -69,12 +101,18 @@ const LoginScreen = () => {
           visibilityTime: 2000,
         });
         return;
-        // Xử lý thông tin đăng nhập không đúng (ví dụ: hiển thị thông báo lỗi)
       }
     } catch (error) {
-      console.error("Lỗi khi xác thực đăng nhập:", error);
+      Toast.show({
+        type: "error",
+        position: "top",
+        text1: "Thông báo",
+        text2: "Tên đăng nhập hoặc mật khẩu không đúng",
+        visibilityTime: 2000,
+      });
     }
   };
+
   const handleForgotPassword = () => {
     // Xử lý quên mật khẩu
   };

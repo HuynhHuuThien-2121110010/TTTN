@@ -1,67 +1,36 @@
-import React, { useState } from "react";
-import FooterContent from "../Content/FooterContent";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  Modal,
-  Button,
-} from "react-native";
+import React from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Button } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { useNavigation } from "@react-navigation/native";
+import { useAuth } from "./AuthContext";
 
-const MyComponent = () => {
+const Account = () => {
   const navigation = useNavigation();
-  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  // Hàm xử lý khi người dùng nhấn vào link đăng nhập
-  const handleLogin = () => {
-    // Thực hiện các bước đăng nhập
-    // Nếu đăng nhập thành công, cập nhật trạng thái đăng nhập và ẩn Modal
-    setIsUserLoggedIn(true);
-    setShowLoginModal(false);
-    // Điều hướng đến trang cần đến sau khi đăng nhập
-    navigation.navigate("Home");
-  };
+  const { authenticated, logout, userInfo } = useAuth();
 
-  // Hàm xử lý khi người dùng nhấn vào thông tin tài khoản
-  const handleProfile = () => {
-    // Điều hướng đến trang thông tin tài khoản
-    navigation.navigate("Profile");
-  };
-  const handleNavigateToLogin = () => {
-    // Điều hướng đến trang đăng nhập khi người dùng nhấn vào nút "Đăng nhập"
-    navigation.navigate("Login");
-  };
-  const handleShowRegisterModal = () => {
-    navigation.navigate("Register");
-  };
-  const handleRegister = () => {
-    // Thực hiện xác thực đăng ký
-    // Nếu đăng ký thành công, bạn có thể điều hướng đến trang chính
-    // Ví dụ: navigation.navigate("Home");
-    // Sau khi đăng ký thành công, đóng modal đăng ký
-    setShowRegisterModal(false);
-  };
   const goBack = () => {
     // Xử lý khi người dùng nhấn nút "Quay về"
     navigation.goBack();
   };
+  console.log("userInfo:", userInfo);
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.backButton} onPress={goBack}>
         <Icon name="arrow-left" size={24} color="black" />
       </TouchableOpacity>
-      {isUserLoggedIn ? (
+      {authenticated ? (
         // Hiển thị nội dung khi đã đăng nhập
         <View style={styles.content}>
-          <Text>Chào mừng bạn!</Text>
-          <Button title="Thông tin tài khoản" onPress={handleProfile} />
+          <Text>Thông tin tài khoản:</Text>
+          {userInfo ? (
+            <>
+              <Text>Username: {userInfo.user.username}</Text>
+              <Text>Email: {userInfo.user.email}</Text>
+            </>
+          ) : (
+            <Text>Loading user information...</Text>
+          )}
+          <Button title="Đăng xuất" onPress={logout} />
         </View>
       ) : (
         // Hiển thị nội dung khi chưa đăng nhập
@@ -69,58 +38,21 @@ const MyComponent = () => {
           <TouchableOpacity style={styles.backButton} onPress={goBack}>
             <Icon name="arrow-left" size={24} color="black" />
           </TouchableOpacity>
-          <Text>Bạn chưa đăng nhập.</Text>
+          <Text style={{ fontSize: 30 }}>Bạn chưa đăng nhập!</Text>
           <View style={styles.buttonContainer}>
-            <Button title="Đăng nhập" onPress={handleNavigateToLogin} />
+            <Button
+              title="Đăng nhập"
+              onPress={() => navigation.navigate("Login")}
+            />
             <Text style={styles.orText}>hoặc</Text>
             <View style={styles.separator} />
-            <Button title="Đăng ký" onPress={handleShowRegisterModal} />
+            <Button
+              title="Đăng ký"
+              onPress={() => navigation.navigate("Register")}
+            />
           </View>
         </View>
       )}
-
-      {/* Modal đăng nhập */}
-      <Modal
-        visible={showLoginModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowLoginModal(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text>Đăng nhập</Text>
-            <TextInput
-              placeholder="Tên đăng nhập"
-              value={username}
-              onChangeText={(text) => setUsername(text)}
-            />
-            <TextInput
-              placeholder="Mật khẩu"
-              secureTextEntry
-              value={password}
-              onChangeText={(text) => setPassword(text)}
-            />
-            <Button title="Đăng nhập" onPress={handleLogin} />
-            <Text style={styles.orText}>hoặc</Text>
-            <Button title="Đóng" onPress={() => setShowLoginModal(false)} />
-          </View>
-        </View>
-      </Modal>
-      <Modal
-        visible={showRegisterModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowRegisterModal(false)}
-      >
-        <View style={styles.content}>
-          <Text>Bạn chưa đăng nhập.</Text>
-          <View style={styles.buttonContainer}>
-            <Button title="Đăng nhập" onPress={handleNavigateToLogin} />
-            <Text style={styles.orText}>hoặc</Text>
-            <Button title="Đăng ký" onPress={handleShowRegisterModal} />
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
@@ -128,30 +60,18 @@ const MyComponent = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: "row",
+    flexDirection: "column", // Đổi thành "column" để tránh việc nút "Quay về" và nội dung trên cùng một dòng
   },
   content: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
   backButton: {
     position: "absolute",
     top: 17,
     left: 15,
     zIndex: 1,
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 10,
-    width: 300,
   },
   buttonContainer: {
     flexDirection: "row",
@@ -163,8 +83,8 @@ const styles = StyleSheet.create({
   orText: {
     marginHorizontal: 10,
     color: "#555",
-    fontSize: 16, // Thêm kích thước chữ
+    fontSize: 16,
   },
 });
 
-export default MyComponent;
+export default Account;

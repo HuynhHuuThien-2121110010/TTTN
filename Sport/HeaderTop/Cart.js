@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { useNavigation } from "@react-navigation/native";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-
+import { useAuth } from "../Content/AuthContext";
 const MyCart = () => {
   const navigation = useNavigation();
   const [cartCount, setCartCount] = useState(0); // Thêm state để theo dõi số lượng sản phẩm trong giỏ hàng
+  const { authenticated } = useAuth();
 
   useEffect(() => {
     // Cập nhật biểu tượng giỏ hàng mỗi khi giỏ hàng thay đổi
@@ -18,6 +19,10 @@ const MyCart = () => {
         <TouchableOpacity
           style={styles.column}
           onPress={() => {
+            if (!authenticated) {
+              navigation.navigate("Acount");
+              return;
+            }
             navigation.navigate("Cart");
           }}
         >

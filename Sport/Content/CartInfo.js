@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import FooterContent from "./FooterContent";
 import HeaderCart from "../Component/HeaderCart";
 import {
   View,
@@ -16,30 +15,39 @@ import { useNavigation } from "@react-navigation/native";
 import { CheckBox } from "react-native-elements";
 import axiosAPI from "../API/axiosAPI";
 import ApiUrl from "../API/ApiUrl";
-
+import { useAuth } from "../Content/AuthContext";
 const MyComponent = () => {
   const [cart, setCart] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const navigation = useNavigation();
-
+  const { authenticated, userInfo } = useAuth();
   const [cartItemCount, setCartItemCount] = useState(0);
-  const [, forceUpdate] = useState();
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     const fetchCart = async () => {
       try {
-        const storedCart = await AsyncStorage.getItem("cart");
-        const parsedCart = storedCart ? JSON.parse(storedCart) : [];
-        setCart(parsedCart);
-        setCartItemCount(parsedCart.length);
+        if (authenticated) {
+          const userId = userInfo.user.id;
+          setUserId(userId);
+          // Thay userInfo.id bằng cách lấy thông tin định danh của người dùng
+          const storedCart = await AsyncStorage.getItem(`cart_${userId}`);
+          const parsedCart = storedCart ? JSON.parse(storedCart) : [];
+          setCart(parsedCart);
+          setCartItemCount(parsedCart.length);
+        } else {
+          setCart([]);
+          setCartItemCount(0);
+        }
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu giỏ hàng:", error);
       }
     };
 
     fetchCart();
-  }, []);
+  }, [authenticated, userInfo]);
 
+  //
   const calculateTotalAmount = (selectedProducts) => {
     const selectedCart = cart.filter((item) =>
       selectedProducts.includes(item.id)
@@ -50,15 +58,24 @@ const MyComponent = () => {
     setCartItemCount(totalAmount);
   };
   const formatPrice = (price) => {
-    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    if (price != null) {
+      return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    } else {
+      return "N/A"; // or any default value you prefer
+    }
   };
+
   const handleCheckout = () => {
     // Chuyển dữ liệu giỏ hàng và sản phẩm đã chọn sang màn hình CheckOut
     navigation.navigate("CheckOut", {
       cart: cart,
-      selectedProducts: selectedProducts,
+      totalAmount: totalAmount,
+      selectedProducts: cart.filter((item) =>
+        selectedProducts.includes(item.id)
+      ),
     });
   };
+
   const toggleSelectProduct = (productId) => {
     const updatedSelectedProducts = selectedProducts.includes(productId)
       ? selectedProducts.filter((id) => id !== productId)
@@ -72,8 +89,9 @@ const MyComponent = () => {
   const handleRemoveItem = (item) => {
     const updatedCart = cart.filter((cartItem) => cartItem.id !== item.id);
     setCart(updatedCart);
-    saveCartToAsyncStorage(updatedCart);
+    saveCartToAsyncStorage(updatedCart, userId);
   };
+
   const handleIncreaseQuantity = (item) => {
     const updatedCart = cart.map((cartItem) => {
       if (cartItem.id === item.id) {
@@ -88,7 +106,7 @@ const MyComponent = () => {
       return cartItem;
     });
     setCart(updatedCart);
-    saveCartToAsyncStorage(updatedCart);
+    saveCartToAsyncStorage(updatedCart, userId);
   };
 
   const handleDecreaseQuantity = (item) => {
@@ -105,12 +123,12 @@ const MyComponent = () => {
       return cartItem;
     });
     setCart(updatedCart);
-    saveCartToAsyncStorage(updatedCart);
+    saveCartToAsyncStorage(updatedCart, userId);
   };
 
-  const saveCartToAsyncStorage = async (updatedCart) => {
+  const saveCartToAsyncStorage = async (updatedCart, userId) => {
     try {
-      await AsyncStorage.setItem("cart", JSON.stringify(updatedCart));
+      await AsyncStorage.setItem(`cart_${userId}`, JSON.stringify(updatedCart));
       const itemCount = updatedCart.reduce(
         (total, item) => total + item.quantity,
         0
@@ -155,7 +173,7 @@ const MyComponent = () => {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.totalPrice}>Tổng giá: {item.totalPrice} đ</Text>
+        <Text style={styles.totalPrice}>Tổng giá: {item.totalPrice}</Text>
       </View>
       <TouchableOpacity
         onPress={() => handleRemoveItem(item)}

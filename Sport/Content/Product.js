@@ -14,14 +14,16 @@ import Carousel from "react-native-snap-carousel";
 import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ApiUrl from "../API/ApiUrl";
+import { useAuth } from "../Content/AuthContext";
 
 const Product = () => {
   const [products, setProducts] = useState([]);
   const navigation = useNavigation();
+  const { authenticated, userInfo } = useAuth();
   const [cart, setCart] = useState([]);
   const [visibleSpringItemCount, setVisibleSpringItemCount] = useState(5);
 
-  useEffect(() => { 
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const result = await axiosAPI.get("products?populate=*");
@@ -45,8 +47,13 @@ const Product = () => {
   };
 
   const addToCart = async (item) => {
+    if (!authenticated) {
+      navigation.navigate("Acount");
+      return;
+    }
     try {
-      const existingCart = await AsyncStorage.getItem("cart");
+      const userId = userInfo.user.id;
+      const existingCart = await AsyncStorage.getItem(`cart_${userId}`);
       const existingCartArray = existingCart ? JSON.parse(existingCart) : [];
 
       const existingItemIndex = existingCartArray.findIndex(
@@ -62,7 +69,10 @@ const Product = () => {
         existingCartArray.push(newItem);
       }
 
-      await AsyncStorage.setItem("cart", JSON.stringify(existingCartArray));
+      await AsyncStorage.setItem(
+        `cart_${userId}`,
+        JSON.stringify(existingCartArray)
+      );
       setCart(existingCartArray);
 
       // Hiển thị Toast
@@ -188,7 +198,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#ee4e2e",
     padding: 10,
     marginVertical: 5,
-    marginHorizontal:3,
+    marginHorizontal: 3,
   },
   addToCartButtonText: {
     color: "white",

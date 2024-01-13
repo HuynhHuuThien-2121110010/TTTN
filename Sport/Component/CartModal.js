@@ -8,9 +8,11 @@ import Modal from "react-native-modal";
 import Icon from "react-native-vector-icons/FontAwesome";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ApiUrl from "../API/ApiUrl";
+import { useAuth } from "../Content/AuthContext";
 
 const CartModal = ({ isVisible, closeModal, product, setCart }) => {
   const [quantity, setQuantity] = useState(1);
+  const { authenticated, userInfo } = useAuth();
   const increaseQuantity = () => {
     setQuantity(quantity + 1);
   };
@@ -21,9 +23,14 @@ const CartModal = ({ isVisible, closeModal, product, setCart }) => {
     }
   };
 
-  const addToCart = async (item, quantity) => {
+  const addToCart = async (item) => {
+    if (!authenticated) {
+      navigation.navigate("Acount");
+      return;
+    }
     try {
-      const existingCart = await AsyncStorage.getItem("cart");
+      const userId = userInfo.user.id;
+      const existingCart = await AsyncStorage.getItem(`cart_${userId}`);
       const existingCartArray = existingCart ? JSON.parse(existingCart) : [];
 
       const existingItemIndex = existingCartArray.findIndex(
@@ -31,19 +38,18 @@ const CartModal = ({ isVisible, closeModal, product, setCart }) => {
       );
 
       if (existingItemIndex !== -1) {
-        existingCartArray[existingItemIndex].quantity += quantity;
+        existingCartArray[existingItemIndex].quantity += 1;
         existingCartArray[existingItemIndex].totalPrice =
           existingCartArray[existingItemIndex].quantity * item.price;
       } else {
-        const newItem = {
-          ...item,
-          quantity,
-          totalPrice: item.price * quantity,
-        };
+        const newItem = { ...item, quantity: 1, totalPrice: item.price };
         existingCartArray.push(newItem);
       }
 
-      await AsyncStorage.setItem("cart", JSON.stringify(existingCartArray));
+      await AsyncStorage.setItem(
+        `cart_${userId}`,
+        JSON.stringify(existingCartArray)
+      );
       setCart(existingCartArray);
 
       // Hiển thị Toast
