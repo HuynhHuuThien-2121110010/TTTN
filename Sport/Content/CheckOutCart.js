@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,26 +6,28 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  ScrollView,
 } from "react-native";
-
 import { useNavigation } from "@react-navigation/native";
 import ApiUrl from "../API/ApiUrl";
-
-const PaymentForm = () => {
-  const route = useRoute();
+import Toast from "react-native-toast-message";
+import { useAuth } from "./AuthContext";
+import { Picker } from "@react-native-picker/picker";
+import { Linking } from "react-native";
+import axiosAPI from "../API/axiosAPI";
+const PaymentForm = ({ route }) => {
   const { productInfo } = route.params;
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("cash"); // Giả sử "cash" là phương thức thanh toán mặc định
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("cash");
+  // Thêm các phương thức thanh toán khác nếu cần
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountedAmount, setDiscountedAmount] = useState(0);
+  const [shippingFee, setShippingFee] = useState(20000);
   const navigation = useNavigation();
   const [fullName, setFullName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");
-  const [region, setRegion] = useState({
-    latitude: 37.78825, // Địa điểm mặc định
-    longitude: -122.4324,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-  });
-
+  const [totalAmount, setTotalAmount] = useState(0);
+  const { userInfo } = useAuth();
   const formatPrice = (price) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
@@ -36,18 +38,90 @@ const PaymentForm = () => {
       return str.substring(0, maxLength) + "...";
     }
   };
+  //-------------------Gửi Email -------------------
+  const handleOrder = async () => {
+    if (!fullName || !phoneNumber || !address) {
+      Toast.show({
+        type: "error",
+        position: "top",
+        text1: "Thông báo",
+        text2: "Nhập đầy đủ thông tin",
+        visibilityTime: 2000,
+      });
+    } else {
+      const phoneRegex = /^0[0-9+\s()]*$/;
 
-  const handleOrder = () => {
-    // Xử lý đặt hàng ở đây
-    // Ví dụ: Kiểm tra thông tin và thực hiện đặt hàng
-    alert(
-      `Đặt hàng thành công! Phương thức thanh toán: ${selectedPaymentMethod}`
-    );
+      if (!phoneRegex.test(phoneNumber)) {
+        alert("Số điện thoại không hợp lệ. Vui lòng nhập 10 chữ số!");
+        return;
+      } else {
+        if (selectedPaymentMethod === "cash") {
+          const response = await axiosAPI.post("orders", {
+            data: {
+              code: Math.floor(Math.random() * 10000),
+              user_id: userInfo.user.id,
+              deliveryaddress: address,
+              deliveryname: fullName,
+              deliveryphone: phoneNumber,
+              deliveryemail: userInfo.user.email,
+              status: 0,
+              orderdetails: [1, 2],
+            },
+          });
+          console.log("Dữ liệu 1:", response.data);
+
+          // Kiểm tra kết quả từ API và xử lý tương ứng
+          if (response.status === 200) {
+            // sendOrderConfirmationEmail(userInfo.user.email);
+            navigation.navigate("Home");
+            Toast.show({
+              type: "success",
+              position: "top",
+              text1: "Đặt hàng thành công",
+              text2: `Mã đơn hàng: ${response.data.data.attributes.code}`,
+              visibilityTime: 2000,
+            });
+          } else {
+            Toast.show({
+              type: "error",
+              position: "top",
+              text1: "Đặt hàng thất bại",
+              text2: "Có lỗi xảy ra. Vui lòng thử lại sau.",
+              visibilityTime: 2000,
+            });
+          }
+        } else {
+          if (selectedPaymentMethod === "momo") {
+            const momoUrl = "momo://payment?..."; // Thêm tham số cần thiết
+
+            // Mở ứng dụng Momo nếu đã cài đặt, ngược lại mở trình duyệt
+            Linking.canOpenURL(momoUrl).then((supported) => {
+              if (supported) {
+                Linking.openURL(momoUrl);
+              } else {
+                // Nếu không hỗ trợ, có thể mở trình duyệt để thanh toán qua trình duyệt
+                Linking.openURL("https://momo.vn");
+              }
+            });
+          } else {
+            alert(
+              `Đặt hàng thành công! Phương thức thanh toán: chuyển khoản. Thành tiền: ${discountedTotalAmount} đ`
+            );
+          }
+        }
+      }
+    }
   };
+
+  const productTotal = productInfo.price * productInfo.quantity;
+  const discountAmount = parseInt(discountCode) || 0; // Nếu discountCode không phải số, sẽ sử dụng giá trị mặc định là 0
+  const total = productTotal + discountAmount + shippingFee;
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text>Thông tin sản phẩm</Text>
+      <ScrollView style={styles.scrollView}>
+        {/* Các thông tin sản phẩm */}
+        <Text style={{ textAlign: "center" }}>Thông tin sản phẩm</Text>
         <View style={styles.cartItem}>
           <Image
             style={styles.productImage}
@@ -66,7 +140,7 @@ const PaymentForm = () => {
               </Text>
             </View>
             <Text style={styles.priceText}>
-              Thành tiền: {`đ ${formatPrice(productInfo.price)}`}
+              Giá: {`đ${formatPrice(productInfo.price)}`}
             </Text>
           </View>
         </View>
@@ -77,7 +151,6 @@ const PaymentForm = () => {
           value={fullName}
           onChangeText={(text) => setFullName(text)}
         />
-
         <Text style={styles.label}>Số điện thoại:</Text>
         <TextInput
           style={styles.input}
@@ -86,15 +159,36 @@ const PaymentForm = () => {
           value={phoneNumber}
           onChangeText={(text) => setPhoneNumber(text)}
         />
-
-        <Text style={styles.label}>Địa chỉ: </Text>
+        <Text style={styles.label}>Địa chỉ:</Text>
         <TextInput
           style={styles.input}
           placeholder="Nhập địa chỉ"
           value={address}
           onChangeText={(text) => setAddress(text)}
         />
+        {/* <Text style={styles.label}>Mã giảm giá:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Nhập mã giảm giá"
+          value={discountCode}
+          onChangeText={(text) => setDiscountCode(text)}
+        /> */}
+        <Text style={styles.label}>
+          Tổng giá: {`đ ${formatPrice(productTotal)}`}
+        </Text>
 
+        {/* <Text style={styles.label}>
+          Mã giảm:{`đ ${formatPrice(discountCode)}`}
+        </Text> */}
+        <Text style={styles.label}>
+          Phí vận chuyển: {`đ ${formatPrice(shippingFee)}`}
+        </Text>
+        <Text style={styles.label}>
+          Thành Tiền: {`đ ${formatPrice(total)}`}
+        </Text>
+      </ScrollView>
+      {/* Nút đặt hàng và quay lại */}
+      <View style={styles.buy}>
         <TouchableOpacity style={styles.button} onPress={handleOrder}>
           <Text style={styles.buttonText}>Đặt hàng</Text>
         </TouchableOpacity>
@@ -115,11 +209,32 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 15,
   },
+  buy: {
+    flexDirection: "row",
+  },
+  mapButton: {
+    backgroundColor: "#be1e2d",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  map: {
+    height: 200,
+    borderRadius: 8,
+    overflow: "hidden",
+    marginTop: 10,
+  },
   cartItem: {
     flexDirection: "row",
     justifyContent: "flex-start",
     alignItems: "center",
-    backgroundColor: "#fff", // Thêm màu nền để phân biệt các sản phẩm
+    backgroundColor: "#fff",
     padding: 10,
     borderRadius: 8,
     shadowColor: "#000",
@@ -127,7 +242,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-    marginTop: 10, // Thay đổi giá trị này nếu cần
+    marginTop: 10,
     marginLeft: 2,
     marginRight: 2,
   },
@@ -139,6 +254,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     marginBottom: 8,
+    marginTop: 8,
   },
   input: {
     height: 40,
@@ -151,18 +267,16 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: "#be1e2d",
     padding: 15,
+    marginRight: 5,
+    flex: 1,
     borderRadius: 8,
     alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
   },
   backButton: {
     backgroundColor: "#ccc",
     padding: 15,
-    marginTop: 5,
+    flex: 1,
+    marginLeft: 5,
     borderRadius: 8,
     alignItems: "center",
   },

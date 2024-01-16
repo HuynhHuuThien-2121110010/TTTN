@@ -1,6 +1,6 @@
 import axios from "axios";
 const axiosAPI = axios.create({
-  baseURL: "http://10.17.14.4:1337/api/",
+  baseURL: "http://172.16.0.89:1337/api/",
   timeout: 1000,
   headers: { "X-Custom-Header": "foobar" },
 });

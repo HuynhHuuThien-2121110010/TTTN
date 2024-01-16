@@ -78,6 +78,10 @@ const ProductDetail = ({ route }) => {
   }
   //---------------------Mua ngay-----------------------------
   const openPopup = () => {
+    if (!authenticated) {
+      navigation.navigate("Acount");
+      return;
+    }
     const price = product.attributes.price * quantity;
     setTotalPrice(price);
 
@@ -85,6 +89,7 @@ const ProductDetail = ({ route }) => {
       image: productImage[swiperIndex].attributes.url,
       productName: product.attributes.productName,
       quantity: quantity,
+      id: product.id,
       // Thêm các thông tin khác của sản phẩm nếu cần
     });
     setPopupVisible(true);
@@ -117,7 +122,7 @@ const ProductDetail = ({ route }) => {
   const handleCheckout = () => {
     // Xử lý thanh toán ở đây
     // Ví dụ: Chuyển đến màn hình thanh toán
-    navigation.navigate("CheckOut");
+    navigation.navigate("CheckOutCart");
     closePopup();
   };
   //--------------------------thêm vào giỏ----------------
@@ -243,11 +248,12 @@ const ProductDetail = ({ route }) => {
   };
 
   const handleBuyNow = () => {
-    navigation.navigate("CheckOut", {
+    navigation.navigate("CheckOutCart", {
       productInfo: {
+        id: selectedProductInfo.id,
         image: selectedProductInfo.image,
         productName: selectedProductInfo.productName,
-        price: totalPrice,
+        price: product.attributes.price,
         quantity: quantity,
       },
     });
@@ -403,6 +409,7 @@ const ProductDetail = ({ route }) => {
               {selectedProductInfo?.productName}
             </Text>
             <View style={styles.quantityContainer}>
+              <Text>Số lượng: </Text>
               <TouchableOpacity
                 onPress={decreaseQuantity}
                 style={styles.quantityButton}
@@ -417,7 +424,9 @@ const ProductDetail = ({ route }) => {
                 <Icon name="plus" size={10} color="white" />
               </TouchableOpacity>
             </View>
-            <Text style={styles.popupText}>Tổng giá: ${totalPrice}</Text>
+            <Text style={styles.popupText}>
+              Giá: {`đ${formatPrice(product.attributes.price)}`}
+            </Text>
             {/* Thêm các thông tin khác của sản phẩm nếu cần */}
             <TouchableOpacity
               onPress={handleBuyNow}
