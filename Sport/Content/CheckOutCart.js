@@ -62,14 +62,36 @@ const PaymentForm = ({ route }) => {
               user_id: userInfo.user.id,
               deliveryaddress: address,
               deliveryname: fullName,
+              total: total,
+              ship: shippingFee,
               deliveryphone: phoneNumber,
               deliveryemail: userInfo.user.email,
               status: 0,
-              orderdetails: [1, 2],
+              orderdetails: [],
             },
           });
-          console.log("Dữ liệu 1:", response.data);
-
+          console.log("Dữ liệu 1:", response.data.data.id);
+          const orderId = response.data.data.id;
+          console.log("Dữ liệu 2:", productInfo);
+          const orderDetailsResponse1 = await axiosAPI.post("orderdetails", {
+            data: {
+              order_id: orderId,
+              product_id: productInfo.id,
+              qty: productInfo.quantity,
+              price: productInfo.price,
+              amount: productInfo.price * productInfo.quantity,
+              products: [],
+            },
+          });
+          const id = orderDetailsResponse1.data.data.id;
+          const updateMainOrderResponse = await axiosAPI.put(
+            `orders/${orderId}`,
+            {
+              data: {
+                orderdetails: id,
+              },
+            }
+          );
           // Kiểm tra kết quả từ API và xử lý tương ứng
           if (response.status === 200) {
             // sendOrderConfirmationEmail(userInfo.user.email);

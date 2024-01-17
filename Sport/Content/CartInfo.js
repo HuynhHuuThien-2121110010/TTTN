@@ -73,9 +73,18 @@ const MyComponent = () => {
       selectedProducts: cart.filter((item) =>
         selectedProducts.includes(item.id)
       ),
+      onCheckoutSuccess: handleCheckoutSuccess,
     });
   };
-
+  const handleCheckoutSuccess = () => {
+    // Xử lý sau khi đặt hàng thành công
+    const updatedCart = cart.filter(
+      (item) => !selectedProducts.includes(item.id)
+    );
+    setCart(updatedCart);
+    setSelectedProducts([]);
+    saveCartToAsyncStorage(updatedCart, userId);
+  };
   const toggleSelectProduct = (productId) => {
     const updatedSelectedProducts = selectedProducts.includes(productId)
       ? selectedProducts.filter((id) => id !== productId)

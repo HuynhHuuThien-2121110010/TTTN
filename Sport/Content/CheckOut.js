@@ -23,6 +23,7 @@ const PaymentForm = ({ route }) => {
   const [discountedAmount, setDiscountedAmount] = useState(0);
   const [shippingFee, setShippingFee] = useState(20000);
   const navigation = useNavigation();
+  const [orderDetailsArray, setOrderDetailsArray] = useState([]);
   const [fullName, setFullName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");
@@ -70,6 +71,14 @@ const PaymentForm = ({ route }) => {
     // Lưu giá trị vào state để render lại component
     setDiscountedAmount(discountedTotalAmount);
   }, [totalAmount, discountCode, shippingFee]);
+  const handleOrderSuccess = () => {
+    // Xử lý sau khi đặt hàng thành công
+
+    // Gọi hàm callback để cập nhật giỏ hàng sau khi thanh toán thành công
+    if (route.params.onCheckoutSuccess) {
+      route.params.onCheckoutSuccess();
+    }
+  };
   const handleOrder = async () => {
     if (!fullName || !phoneNumber || !address) {
       Toast.show({
@@ -112,24 +121,104 @@ const PaymentForm = ({ route }) => {
                 return item.id;
               }
             });
+
             const response = await axiosAPI.post("orders", {
               data: {
-                code: Math.floor(Math.random() * 10000),
+                code: Math.floor(Math.random() * 100000),
                 user_id: userInfo.user.id,
                 deliveryaddress: address,
                 deliveryname: fullName,
+                total: discountedAmount,
+                ship: shippingFee,
                 deliveryphone: phoneNumber,
                 deliveryemail: userInfo.user.email,
                 status: 0,
-                orderdetails: [1],
+                orderdetails: [],
               },
             });
-            console.log("Response received:", response.data);
+            // console.log("Response received:", response.data.data.id);
+            const log1 = orderDetailsArray.map((item) => ({
+              products: item.quantity,
+            }));
+            const total = log1.reduce((accumulator, current) => {
+              return accumulator + current.products;
+            }, 0);
+            const orderId = response.data.data.id;
+
+            const orderDetailsIdss = orderDetailsArray.map((item) => ({
+              product_id: item.id,
+              price: item.attributes.price,
+              qty: item.quantity,
+              amount: item.totalPrice,
+            }));
+            const productIds = orderDetailsIdss.map(
+              (orderDetail) => orderDetail.products
+            );
+
+            // console.log(productIds);
+            // console.log(orderDetailsIdss);
+            const orderDetailsPromises = orderDetailsArray.map(async (item) => {
+              const orderDetailsResponse = await axiosAPI.post("orderdetails", {
+                data: {
+                  order_id: orderId,
+                  amount: item.totalPrice,
+                  price: item.attributes.price,
+                  product_id: item.id,
+                  qty: item.quantity,
+                },
+              });
+              return orderDetailsResponse.data.data.id;
+            });
+            // Chờ tất cả các promise hoàn thành
+            const orderDetailsResponses = await Promise.all(
+              orderDetailsPromises
+            );
+            const updateMainOrderResponse = await axiosAPI.put(
+              `orders/${orderId}`,
+              {
+                data: {
+                  orderdetails: orderDetailsResponses,
+                },
+              }
+            );
+
+            // Bây giờ, orderDetailsResponses chứa kết quả của tất cả các yêu cầu axiosAPI.post
+            // console.log(orderDetailsResponses);
+
+            // await axiosAPI.put(`orders/${orderId}`, {
+            //   data: {
+            //     orderdetails: orderDetailsIds,
+            //   },
+            // });
+            // const orderDetailsPromises = orderDetailsIdss.map((orderDetail) =>
+            //   axiosAPI.post("orderdetails", {
+            //     data: {
+            //       order_id: orderId,
+            //       qty: orderDetail.quantity,
+            //       price: item.orderDetail.price,
+            //       amount: item.orderDetail.price * orderDetail.quantity,
+            //       products: [],
+            //     },
+            //   })
+            // );
+            // try {
+            //   const responses = await Promise.all(orderDetailsPromises);
+            //   // console.log("OrderDetail responses:", responses);
+            //   // Xử lý kết quả từ API nếu cần
+            // } catch (error) {
+            //   console.error("Error posting order details:", error);
+            //   // Xử lý lỗi nếu cần
+            // }
 
             // Kiểm tra kết quả từ API và xử lý tương ứng
             if (response.status === 200) {
               // sendOrderConfirmationEmail(userInfo.user.email);
+              handleOrderSuccess();
               navigation.navigate("Home");
+              setOrderDetailsArray([
+                ...orderDetailsArray,
+                response.data.data.id,
+              ]);
               Toast.show({
                 type: "success",
                 position: "top",
@@ -296,19 +385,16 @@ const PaymentForm = ({ route }) => {
           <Picker.Item label="Cash" value="cash" />
           <Picker.Item label="Transfer" value="transfer" />
         </Picker> */}
-        <Text style={styles.label}>Mã giảm giá:</Text>
+        {/* <Text style={styles.label}>Mã giảm giá:</Text>
         <TextInput
           style={styles.input}
           placeholder="Nhập mã giảm giá"
           value={discountCode}
           onChangeText={(text) => setDiscountCode(text)}
-        />
+        /> */}
 
         <Text style={styles.label}>
           Tổng giá: {`đ ${formatPrice(totalAmount)}`}
-        </Text>
-        <Text style={styles.label}>
-          Mã giảm:{`đ ${formatPrice(discountCode)}`}
         </Text>
         <Text style={styles.label}>
           Phí vận chuyển: {`đ ${formatPrice(shippingFee)}`}

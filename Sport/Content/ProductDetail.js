@@ -76,6 +76,7 @@ const ProductDetail = ({ route }) => {
   function filterByCategory(data, category) {
     return data.filter((item) => item.categoryName === category);
   }
+
   //---------------------Mua ngay-----------------------------
   const openPopup = () => {
     if (!authenticated) {
@@ -104,6 +105,17 @@ const ProductDetail = ({ route }) => {
     // Đóng pop-up sau khi thanh toán thành công hoặc theo logic của bạn
     closePopup();
   };
+
+  const updateTotalPrice = () => {
+    const newTotalPrice = product.attributes.price * quantity;
+    setTotalPrice(newTotalPrice);
+  };
+  const handleCheckout = () => {
+    // Xử lý thanh toán ở đây
+    // Ví dụ: Chuyển đến màn hình thanh toán
+    navigation.navigate("CheckOutCart");
+    closePopup();
+  };
   const increaseQuantity = () => {
     setQuantity((prevQuantity) => prevQuantity + 1);
     updateTotalPrice();
@@ -114,16 +126,6 @@ const ProductDetail = ({ route }) => {
       setQuantity((prevQuantity) => prevQuantity - 1);
       updateTotalPrice();
     }
-  };
-  const updateTotalPrice = () => {
-    const newTotalPrice = product.attributes.price * quantity;
-    setTotalPrice(newTotalPrice);
-  };
-  const handleCheckout = () => {
-    // Xử lý thanh toán ở đây
-    // Ví dụ: Chuyển đến màn hình thanh toán
-    navigation.navigate("CheckOutCart");
-    closePopup();
   };
   //--------------------------thêm vào giỏ----------------
   const openModal = () => {
