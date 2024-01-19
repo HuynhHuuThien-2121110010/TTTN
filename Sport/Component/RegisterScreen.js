@@ -18,6 +18,8 @@ const RegisterScreen = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -56,6 +58,8 @@ const RegisterScreen = () => {
         username,
         password,
         email,
+        name,
+        phone,
       });
 
       // Xử lý kết quả từ server
@@ -106,7 +110,14 @@ const RegisterScreen = () => {
         <Icon name="arrow-left" size={24} color="black" />
       </TouchableOpacity>
       <Text style={styles.title}>Đăng ký</Text>
+
       <View style={styles.form}>
+        <TextInput
+          style={styles.input}
+          placeholder="Họ và tên"
+          value={name}
+          onChangeText={(text) => setName(text)}
+        />
         <TextInput
           style={styles.input}
           placeholder="Email"
@@ -114,7 +125,13 @@ const RegisterScreen = () => {
           value={email}
           onChangeText={(text) => setEmail(text)}
         />
-
+        <TextInput
+          style={styles.input}
+          placeholder="Số điện thoại"
+          keyboardType="phone-pad"
+          value={phone}
+          onChangeText={(text) => setPhone(text)}
+        />
         <TextInput
           style={styles.input}
           placeholder="Tên đăng nhập"

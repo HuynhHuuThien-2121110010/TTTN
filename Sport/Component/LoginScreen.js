@@ -24,13 +24,14 @@ const LoginScreen = () => {
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        // Kiểm tra trạng thái đăng nhập
         const userDataString = await AsyncStorage.getItem("userData");
 
         if (userDataString) {
-          // Nếu có dữ liệu người dùng, set lại trạng thái đăng nhập ở đây
           const userData = JSON.parse(userDataString);
-          login(userData);
+
+          if (userData) {
+            login(userData);
+          }
         }
       } catch (error) {
         console.error("Lỗi khi kiểm tra trạng thái đăng nhập:", error);
@@ -43,7 +44,7 @@ const LoginScreen = () => {
   //-----------------------
   const fetchData = async () => {
     try {
-      const result = await axiosAPI.post("auth/local", {
+      const result = await axiosAPI.post("auth/local?populate=*", {
         identifier: username,
         password: password,
       });
@@ -68,13 +69,14 @@ const LoginScreen = () => {
     }
 
     try {
-      const result = await axiosAPI.post("auth/local", {
+      const result = await axiosAPI.post("auth/local?populate=*", {
         identifier: username,
         password: password,
       });
 
       // Kiểm tra phản hồi từ API
-      if (result.data && result.data.jwt) {
+      // Kiểm tra phản hồi từ API
+      if (result.data && result.data.user) {
         await AsyncStorage.setItem("userData", JSON.stringify(result.data));
         login(result.data);
         // Thực hiện chuyển hướng trang

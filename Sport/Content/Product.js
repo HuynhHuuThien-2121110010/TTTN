@@ -35,7 +35,18 @@ const Product = () => {
 
     fetchData();
   }, []);
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const result = await axiosAPI.get("orderdetails?populate=*");
+  //       setProducts(result.data.data); // Update this line
+  //     } catch (error) {
+  //       console.error("Lỗi khi lấy dữ liệu:", error);
+  //     }
+  //   };
 
+  //   fetchData();
+  // }, []);
   const handleProductPress = (product) => {
     // Chuyển đến trang chi tiết sản phẩm và truyền thông tin sản phẩm
     // Bạn cần import navigation từ thư viện bạn sử dụng (React Navigation chẳng hạn)

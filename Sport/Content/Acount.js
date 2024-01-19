@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Button } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "./AuthContext";
+import Profile from "../Content/Profile";
 
 const Account = () => {
   const navigation = useNavigation();
@@ -12,7 +13,6 @@ const Account = () => {
     // Xử lý khi người dùng nhấn nút "Quay về"
     navigation.goBack();
   };
-  console.log("userInfo:", userInfo);
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.backButton} onPress={goBack}>
@@ -20,18 +20,7 @@ const Account = () => {
       </TouchableOpacity>
       {authenticated ? (
         // Hiển thị nội dung khi đã đăng nhập
-        <View style={styles.content}>
-          <Text>Thông tin tài khoản:</Text>
-          {userInfo ? (
-            <>
-              <Text>Username: {userInfo.user.username}</Text>
-              <Text>Email: {userInfo.user.email}</Text>
-            </>
-          ) : (
-            <Text>Loading user information...</Text>
-          )}
-          <Button title="Đăng xuất" onPress={logout} />
-        </View>
+        <Profile userInfo={userInfo} />
       ) : (
         // Hiển thị nội dung khi chưa đăng nhập
         <View style={styles.content}>

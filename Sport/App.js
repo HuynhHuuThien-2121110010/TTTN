@@ -19,6 +19,9 @@ import { TouchableOpacity } from "react-native";
 import LoginScreen from "./Component/LoginScreen";
 import RegisterScreen from "./Component/RegisterScreen";
 import { AuthProvider } from "./Content/AuthContext";
+import ChangeAccount from "./Content/ChangeAccount";
+import OrderHistory from "./Content/OrderHistory";
+import OrderDetails from "./Content/OrderDetails";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Stack = createStackNavigator();
@@ -44,6 +47,7 @@ const HomeScreen = () => {
             // Nếu có dữ liệu người dùng, set lại trạng thái đăng nhập ở đây
             const userData = JSON.parse(userDataString);
             login(userData);
+            console.log(userData);
           }
         } catch (error) {
           console.error("Lỗi khi kiểm tra trạng thái đăng nhập:", error);
@@ -102,6 +106,9 @@ export default function App() {
             <Stack.Screen name="Acount" component={Acount} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="ChangeAccount" component={ChangeAccount} />
+            <Stack.Screen name="OrderHistory" component={OrderHistory} />
+            <Stack.Screen name="OrderDetails" component={OrderDetails} />
           </Stack.Navigator>
         </NavigationContainer>
         <Toast ref={(ref) => Toast.setRef(ref)} />
