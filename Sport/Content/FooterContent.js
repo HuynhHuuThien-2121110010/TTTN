@@ -57,7 +57,7 @@ const MyCart = () => {
   };
   return (
     <View style={styles.containertop}>
-      <Text>Liên hệ (miễn phí cuộc gọi)</Text>
+      <Text>Theo dõi</Text>
       <View style={styles.container}>
         <View style={styles.containerright}>
           <TouchableOpacity onPress={handleFacebookPress}>
@@ -89,7 +89,7 @@ const MyCart = () => {
       </View>
       <View style={styles.container}>
         <View style={styles.containerright}>
-          <Text>Mua ngay</Text>
+          <Text>Liên hệ (miễn phí cuộc gọi)</Text>
         </View>
         <View style={styles.containerleft}>
           <Text>Góp ý:</Text>

@@ -73,9 +73,9 @@ const LoginScreen = () => {
         identifier: username,
         password: password,
       });
-
       // Kiểm tra phản hồi từ API
       // Kiểm tra phản hồi từ API
+      console.log(result);
       if (result.data && result.data.user) {
         await AsyncStorage.setItem("userData", JSON.stringify(result.data));
         login(result.data);

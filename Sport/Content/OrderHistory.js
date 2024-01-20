@@ -14,36 +14,23 @@ const OrderHistory = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { userInfo } = route.params;
+  const [isLoading, setIsLoading] = useState(true);
   const [orders, setOrders] = useState([]);
   const ids = userInfo.user.id;
   useEffect(() => {
     const fetchData = async () => {
       try {
         const result = await axiosAPI.get("orders?populate=*");
-        console.log("Tất cả đơn hàng:", result.data.data);
-
-        console.log("Kiểu dữ liệu của ids:", typeof ids);
-        console.log("Giá trị của ids:", ids);
-
         const filteredOrders = result.data.data.filter((order) => {
-          console.log("Đơn hàng hiện tại:", order);
-          console.log(
-            "User ID trong đơn hàng hiện tại:",
-            order.attributes.user_id
-          );
-
           // Chuyển đổi user_id thành số để so sánh
           const orderUserId = Number(order.attributes.user_id);
-
-          console.log("Điều kiện:", orderUserId === ids);
           return orderUserId === ids;
         });
-
-        console.log("Đơn hàng được lọc:", filteredOrders);
-
         setOrders(filteredOrders);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu:", error);
+      } finally {
+        setIsLoading(false); // Đánh dấu rằng dữ liệu đã được tải xong, không còn trong trạng thái loading
       }
     };
 
@@ -109,11 +96,19 @@ const OrderHistory = () => {
         <Icon name="arrow-left" size={24} color="black" />
       </TouchableOpacity>
       <Text style={styles.title}>Đơn hàng</Text>
-      <FlatList
-        data={orders}
-        keyExtractor={(item) => item.id}
-        renderItem={renderOrderItem}
-      />
+      {/* Kiểm tra xem có đang trong trạng thái loading hay không */}
+      {isLoading ? (
+        <Text style={styles.orderText}>Đang tải đơn hàng...</Text>
+      ) : // Kiểm tra xem có đơn hàng hay không để hiển thị FlatList hoặc thông báo
+      orders.length > 0 ? (
+        <FlatList
+          data={orders}
+          keyExtractor={(item) => item.id}
+          renderItem={renderOrderItem}
+        />
+      ) : (
+        <Text style={styles.title}>Chưa có đơn hàng!</Text>
+      )}
     </View>
   );
 };

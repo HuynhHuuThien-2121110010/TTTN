@@ -12,11 +12,13 @@ const AuthProvider = ({ children }) => {
       try {
         const storedUserInfo = await AsyncStorage.getItem("userInfo");
         if (storedUserInfo) {
-          // Nếu có thông tin người dùng đã lưu, đặt trạng thái ban đầu
           const parsedUserInfo = JSON.parse(storedUserInfo);
           setAuthenticated(true);
           setUserInfo(parsedUserInfo);
           console.log(parsedUserInfo);
+        } else {
+          // Nếu không có thông tin người dùng trong AsyncStorage, đảm bảo setUserInfo với giá trị null
+          setUserInfo(null);
         }
       } catch (error) {
         console.error("Lỗi khi kiểm tra thông tin người dùng đã lưu:", error);
@@ -24,7 +26,9 @@ const AuthProvider = ({ children }) => {
     };
 
     checkStoredUserInfo();
-  }, []); // Mảng phụ thuộc rỗng đảm bảo hiệu ứng này chỉ chạy một lần trong quá trình khởi tạo thành phần
+  }, []);
+
+  // Mảng phụ thuộc rỗng đảm bảo hiệu ứng này chỉ chạy một lần trong quá trình khởi tạo thành phần
   const login = (userData) => {
     setAuthenticated(true);
     setUserInfo(userData);
@@ -40,7 +44,7 @@ const AuthProvider = ({ children }) => {
   const saveLoginInfo = async (userData) => {
     try {
       await AsyncStorage.setItem("userInfo", JSON.stringify(userData));
-      console.log("Thông tin đăng nhập đã được lưu.");
+      console.log("Thông tin đăng nhập đã được lưu.", { userData });
     } catch (error) {
       console.error("Lỗi khi lưu thông tin đăng nhập:", error);
     }

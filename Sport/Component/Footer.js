@@ -16,7 +16,7 @@ const MyComponent = () => {
   const handleIconPress = (iconName) => {
     setSelectedIcon(iconName);
     // Các xử lý khác nếu cần
-  }; 
+  };
   return (
     <View style={styles.container}>
       <TouchableOpacity

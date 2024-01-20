@@ -22,6 +22,8 @@ import { AuthProvider } from "./Content/AuthContext";
 import ChangeAccount from "./Content/ChangeAccount";
 import OrderHistory from "./Content/OrderHistory";
 import OrderDetails from "./Content/OrderDetails";
+import ProfileInfo from "./Content/ProfileInfo";
+import ChangePasswword from "./Content/ChangePasswword";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Stack = createStackNavigator();
@@ -109,6 +111,8 @@ export default function App() {
             <Stack.Screen name="ChangeAccount" component={ChangeAccount} />
             <Stack.Screen name="OrderHistory" component={OrderHistory} />
             <Stack.Screen name="OrderDetails" component={OrderDetails} />
+            <Stack.Screen name="ProfileInfo" component={ProfileInfo} />
+            <Stack.Screen name="ChangePasswword" component={ChangePasswword} />
           </Stack.Navigator>
         </NavigationContainer>
         <Toast ref={(ref) => Toast.setRef(ref)} />

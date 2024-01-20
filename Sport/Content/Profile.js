@@ -17,42 +17,15 @@ import { useAuth } from "./AuthContext";
 
 const ProfileScreen = ({ userInfo }) => {
   const { logout } = useAuth();
-  // const [users, setUsers] = useState([]);
   const [isImageModalVisible, setImageModalVisible] = useState(false);
   const navigation = useNavigation();
   const [isChangeImageModalVisible, setChangeImageModalVisible] =
-    useState(false); // Thêm state mới
-  //   const [userInfo, setUserInfo] = useState({
-  //     username: "JohnDoe",
-  //     email: "john.doe@example.com",
-  //     phoneNumber: "+1234567890",
-  //     address: "123 Main St, City, Country",
-  //     orderHistory: [
-  //       { id: "1", status: "Delivered", totalItems: 3, totalPrice: "$50.00" },
-  //       { id: "2", status: "Processing", totalItems: 2, totalPrice: "$30.00" },
-  //     ],
-  //   });
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const result = await axiosAPI.get("users?populate=*");
-  //       setUsers(result.data); // Update this line
-  //     } catch (error) {
-  //       console.error("Lỗi khi lấy dữ liệu:", error);
-  //     }
-  //   };
+    useState(false);
 
-  //   fetchData();
-  // }, []);
-  // console.log(users);
-  // console.log(userInfo.user.id);
-  // const filteredUsers = users.filter((user) => user.id === userInfo.user.id);
-
-  // console.log(filteredUsers);
   const handleOrderHistory = () => {
-    // Chuyển đến trang lịch sử mua hàng
     navigation.navigate("OrderHistory", { userInfo });
   };
+
   const openImageModal = () => {
     setImageModalVisible(true);
   };
@@ -60,6 +33,7 @@ const ProfileScreen = ({ userInfo }) => {
   const closeImageModal = () => {
     setImageModalVisible(false);
   };
+
   const openChangeImageModal = () => {
     setChangeImageModalVisible(true);
   };
@@ -67,25 +41,19 @@ const ProfileScreen = ({ userInfo }) => {
   const closeChangeImageModal = () => {
     setChangeImageModalVisible(false);
   };
+
   const handleEditAvatar = async () => {
-    // try {
-    //   const image = await ImagePicker.openPicker({
-    //     width: 300,
-    //     height: 400,
-    //     cropping: true,
-    //   });
-    //   // Xử lý ảnh được chọn, ví dụ: lưu vào state, gửi lên máy chủ, ...
-    //   console.log("Selected Image:", image);
-    // } catch (error) {
-    //   console.error("Error selecting image:", error);
-    // }
+    // Các xử lý khi thay đổi ảnh đại diện
   };
-  const avatarUrl =
-    userInfo.user && userInfo.user.avatar
-      ? typeof userInfo.user.avatar === "string"
-        ? userInfo.user.avatar
-        : userInfo.user.avatar.url
-      : "https://assets.stickpng.com/images/585e4bf3cb11b227491c339a.png";
+
+  const username = userInfo?.user?.name ?? "Guest";
+
+  const avatarUrl = userInfo?.user?.avatar
+    ? typeof userInfo.user.avatar === "string"
+      ? userInfo.user.avatar
+      : userInfo.user.avatar.url
+    : "https://assets.stickpng.com/images/585e4bf3cb11b227491c339a.png";
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.profileHeader}>
@@ -93,7 +61,7 @@ const ProfileScreen = ({ userInfo }) => {
           <Image
             style={styles.avatar}
             source={{
-              uri: "https://assets.stickpng.com/images/585e4bf3cb11b227491c339a.png",
+              uri: avatarUrl,
             }}
           />
         </TouchableOpacity>
@@ -103,53 +71,11 @@ const ProfileScreen = ({ userInfo }) => {
           visible={isImageModalVisible}
           onRequestClose={closeImageModal}
         >
-          <View
-            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-          >
-            <Image
-              style={{ width: "100%", height: "100%", resizeMode: "contain" }}
-              source={{
-                uri: "https://assets.stickpng.com/images/585e4bf3cb11b227491c339a.png",
-              }}
-            />
-            <TouchableOpacity
-              style={{ position: "absolute", top: 20, right: 20 }}
-              onPress={closeImageModal}
-            >
-              <Text style={{ color: "black", fontSize: 18 }}>Đóng</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={{
-                position: "absolute",
-                bottom: 20,
-                backgroundColor: "#2f486e",
-                padding: 10,
-                borderRadius: 5,
-              }}
-              onPress={() => handleEditAvatar()}
-            >
-              {userInfo && userInfo.user && (
-                <Text style={{ color: "white" }}>Đổi ảnh</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+          {/* Phần modal code */}
         </Modal>
-        <Text style={styles.username}>Xin Chào! {userInfo?.user?.name}</Text>
-        {/* <Text style={styles.email}>{userInfo.user.email}</Text>
-        <Text style={styles.phoneNumber}>(+84) {userInfo.user.phone}</Text>
-        <Text style={styles.address}>{userInfo.address}</Text> */}
+        <Text style={styles.username}>Xin Chào! {username}</Text>
       </View>
 
-      {/* <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Order History</Text>
-        
-          <TouchableOpacity key={order.id} style={styles.orderItem}>
-            <Text>{`Order ID: ${order.id}`}</Text>
-            <Text>{`Status: ${order.status}`}</Text>
-            <Text>{`Items: ${order.totalItems}`}</Text>
-            <Text>{`Total Price: ${order.totalPrice}`}</Text>
-          </TouchableOpacity>
-      </View> */}
       <TouchableOpacity style={styles.orderButton} onPress={handleOrderHistory}>
         <Text style={styles.orderButtonText}>Đơn mua</Text>
         <View style={styles.arrowIconContainer}>

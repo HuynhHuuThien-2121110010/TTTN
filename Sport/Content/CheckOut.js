@@ -40,6 +40,7 @@ const PaymentForm = ({ route }) => {
     }
   };
   //-------------------Gửi Email -------------------
+  console.log(userInfo);
   //-----------------------------------------------
   useEffect(() => {
     let totalPrice = 0;
@@ -79,6 +80,13 @@ const PaymentForm = ({ route }) => {
       route.params.onCheckoutSuccess();
     }
   };
+  useEffect(() => {
+    // Khi user được nhận, cập nhật giá trị của fullName
+    if (userInfo && userInfo.user) {
+      setFullName(userInfo.user.name);
+      setPhoneNumber(userInfo.user.phone);
+    }
+  }, [userInfo]);
   const handleOrder = async () => {
     if (!fullName || !phoneNumber || !address) {
       Toast.show({
@@ -182,34 +190,6 @@ const PaymentForm = ({ route }) => {
               }
             );
 
-            // Bây giờ, orderDetailsResponses chứa kết quả của tất cả các yêu cầu axiosAPI.post
-            // console.log(orderDetailsResponses);
-
-            // await axiosAPI.put(`orders/${orderId}`, {
-            //   data: {
-            //     orderdetails: orderDetailsIds,
-            //   },
-            // });
-            // const orderDetailsPromises = orderDetailsIdss.map((orderDetail) =>
-            //   axiosAPI.post("orderdetails", {
-            //     data: {
-            //       order_id: orderId,
-            //       qty: orderDetail.quantity,
-            //       price: item.orderDetail.price,
-            //       amount: item.orderDetail.price * orderDetail.quantity,
-            //       products: [],
-            //     },
-            //   })
-            // );
-            // try {
-            //   const responses = await Promise.all(orderDetailsPromises);
-            //   // console.log("OrderDetail responses:", responses);
-            //   // Xử lý kết quả từ API nếu cần
-            // } catch (error) {
-            //   console.error("Error posting order details:", error);
-            //   // Xử lý lỗi nếu cần
-            // }
-
             // Kiểm tra kết quả từ API và xử lý tương ứng
             if (response.status === 200) {
               // sendOrderConfirmationEmail(userInfo.user.email);
@@ -299,7 +279,7 @@ const PaymentForm = ({ route }) => {
     <View style={styles.container}>
       <ScrollView style={styles.scrollView}>
         {/* Các thông tin sản phẩm */}
-        <Text style={{ textAlign: "center" }}>Thông tin sản phẩm</Text>
+        <Text style={{ textAlign: "center" }}>Thông tin đặt hàng</Text>
         {productInfo && (
           <View style={styles.cartItem}>
             <Image
@@ -366,9 +346,10 @@ const PaymentForm = ({ route }) => {
           style={styles.input}
           placeholder="Nhập số điện thoại"
           keyboardType="numeric"
-          value={phoneNumber}
+          value={phoneNumber.toString()}
           onChangeText={(text) => setPhoneNumber(text)}
         />
+
         <Text style={styles.label}>Địa chỉ:</Text>
         <TextInput
           style={styles.input}

@@ -17,6 +17,7 @@ import ApiUrl from "../API/ApiUrl";
 import { useAuth } from "../Content/AuthContext";
 
 const Product = () => {
+  const [totalAmount, setTotalAmount] = useState(0);
   const [products, setProducts] = useState([]);
   const navigation = useNavigation();
   const { authenticated, userInfo } = useAuth();
@@ -56,12 +57,22 @@ const Product = () => {
       product,
     });
   };
+  const calculateTotalAmount = (selectedProducts) => {
+    const selectedCart = cart.filter((item) =>
+      selectedProducts.includes(item.id)
+    );
+    const newTotalAmount = Math.round(
+      selectedCart.reduce((total, item) => total + (item.totalPrice || 0), 0)
+    );
+    setTotalAmount(newTotalAmount); // Update the totalAmount state
+  };
 
   const addToCart = async (item) => {
     if (!authenticated) {
       navigation.navigate("Acount");
       return;
     }
+
     try {
       const userId = userInfo.user.id;
       const existingCart = await AsyncStorage.getItem(`cart_${userId}`);
@@ -84,7 +95,10 @@ const Product = () => {
         `cart_${userId}`,
         JSON.stringify(existingCartArray)
       );
+
+      // Cập nhật giỏ hàng và tính toán tổng giá
       setCart(existingCartArray);
+      calculateTotalAmount(existingCartArray);
 
       // Hiển thị Toast
       Toast.show({
@@ -93,11 +107,16 @@ const Product = () => {
         text1: "Thông báo",
         text2: "Đã thêm sản phẩm vào giỏ hàng!",
         visibilityTime: 2000,
+        onPress: () => {
+          navigation.navigate("Cart");
+        },
       });
     } catch (error) {
       console.error("Lỗi khi thêm sản phẩm vào giỏ hàng:", error);
     }
   };
+
+  // ...
 
   const handleShowMoreSpring = () => {
     setVisibleSpringItemCount(visibleSpringItemCount + 4);
@@ -145,8 +164,8 @@ const Product = () => {
   return (
     <View style={styles.container}>
       <View style={styles.containerheader}>
-        <Text style={{ fontSize: 20, fontWeight: "bold", color: "red" }}>
-          Sẩn phẩm
+        <Text style={{ fontSize: 20, fontWeight: "bold", color: "#2f486e" }}>
+          Sản phẩm
         </Text>
         <TouchableOpacity
           onPress={handleShowMoreSpring}
@@ -206,7 +225,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   addToCartButton: {
-    backgroundColor: "#ee4e2e",
+    backgroundColor: "#2f486e",
     padding: 10,
     marginVertical: 5,
     marginHorizontal: 3,

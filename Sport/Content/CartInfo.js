@@ -114,8 +114,15 @@ const MyComponent = () => {
       }
       return cartItem;
     });
+
+    // Cập nhật trạng thái giỏ hàng
     setCart(updatedCart);
+
+    // Lưu giỏ hàng đã cập nhật vào AsyncStorage
     saveCartToAsyncStorage(updatedCart, userId);
+
+    // Tính toán lại tổng giá
+    calculateTotalAmount(selectedProducts);
   };
 
   const handleDecreaseQuantity = (item) => {

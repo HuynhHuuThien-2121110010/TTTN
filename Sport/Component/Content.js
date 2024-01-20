@@ -20,7 +20,7 @@ const MyComponent = () => {
           <Category></Category>
           <Product></Product>
           <ProductNew></ProductNew>
-          <ProductSelling></ProductSelling>
+          {/* <ProductSelling></ProductSelling> */}
           <ProductSale></ProductSale>
           <FooterContent></FooterContent>
         </View>
