@@ -15,27 +15,30 @@ import { format } from "date-fns";
 
 const OrderDetailsScreen = ({ route }) => {
   const { order } = route.params;
+  const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
   const [mergedData, setMergedData] = useState([]);
   const [products, setProducts] = useState([]);
   const [orderdetails, setOrderdetails] = useState([]);
 
-  // ... (existing code)
+  // // ... (existing code)
 
-  // ... (existing code)
-
+  // // ... (existing code)
   useEffect(() => {
     const fetchData = async () => {
       try {
         const result = await axiosAPI.get("orderdetails?populate=*");
         const allOrderDetails = result.data.data;
 
-        // Convert order.id to string for comparison
-        const orderDetailsForOrder = allOrderDetails.filter(
-          (detail) => detail.attributes.order_id === order.id.toString()
+        console.log("All Order Details:", order.id);
+        const orderIdString = order.id.toString();
+        // Lọc những chi tiết đơn hàng có order_id === order.id
+        const filteredOrderDetails = allOrderDetails.filter(
+          (detail) => detail.attributes.order_id === orderIdString
         );
 
-        setOrderdetails(orderDetailsForOrder);
+        setOrderdetails(filteredOrderDetails);
+        console.log(filteredOrderDetails);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu chi tiết đơn hàng:", error);
       }
@@ -55,15 +58,33 @@ const OrderDetailsScreen = ({ route }) => {
           const product = allProducts.find(
             (p) => p.id === detail.attributes.product_id
           );
-          return {
-            orderDetail: detail,
-            product,
-          };
+
+          // Kiểm tra orderDetail và product trước khi gộp
+          if (product && detail) {
+            // Chắc chắn rằng có trường qty trong orderDetail
+            const qty = detail.attributes.qty || 0;
+
+            return {
+              orderDetail: detail,
+              product: { ...product, qty }, // Thêm qty vào product
+            };
+          } else {
+            return null; // Nếu một trong số chúng là undefined hoặc null, trả về null
+          }
         });
 
-        setMergedData(mergedData);
+        // Lọc bỏ những phần tử null
+        const filteredMergedData = mergedData.filter((data) => data !== null);
+
+        setMergedData(filteredMergedData);
+
+        // Lấy thông tin của những sản phẩm có id trùng với product_id
+        const selectedProducts = filteredMergedData.map((data) => data.product);
+        setProducts(selectedProducts);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu sản phẩm:", error);
+      } finally {
+        setLoading(false); // Đặt trạng thái loading thành false sau khi hoàn tất việc lấy dữ liệu
       }
     };
 
@@ -72,7 +93,7 @@ const OrderDetailsScreen = ({ route }) => {
   const getStatusText = (status) => {
     switch (status) {
       case 0:
-        return "Đang xác nhận";
+        return "Chờ xác nhận";
       case 1:
         return "Đang chuẩn bị";
       case 2:
@@ -86,15 +107,6 @@ const OrderDetailsScreen = ({ route }) => {
     }
   };
 
-  // Add order.id as a dependency
-
-  // ... (existing code)
-  // Add order.id as a dependency
-
-  // ... (existing code)
-
-  //   console.log("order", order.id);
-  //   console.log("orderdetails", orderdetails);
   const formatPrice = (price) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
@@ -102,14 +114,13 @@ const OrderDetailsScreen = ({ route }) => {
     // Xử lý khi người dùng nhấn nút "Quay về"
     navigation.goBack();
   };
-  console.log("me", order);
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.backButton} onPress={goBack}>
         <Icon name="arrow-left" size={24} color="black" />
       </TouchableOpacity>
       <Text style={styles.title}>Thông Tin Đơn hàng</Text>
-      <Text style={styles.text}>{`Mã đơn hàng: ${order.id}`}</Text>
+      <Text style={styles.text}>{`Mã đơn hàng: ${order.attributes.code}`}</Text>
       <Text style={styles.text}>{`Ngày đặt hàng: ${format(
         new Date(order.attributes.createdAt),
         "dd/MM/yyyy HH:mm:ss"
@@ -122,8 +133,8 @@ const OrderDetailsScreen = ({ route }) => {
       )}`}</Text>
       <Text style={styles.subtitle}>Sản phẩm trong đơn hàng:</Text>
       <FlatList
-        data={mergedData}
-        keyExtractor={(item) => item.orderDetail.id}
+        data={products}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.productItem}>
             <View style={styles.productInfoContainer}>
@@ -132,14 +143,15 @@ const OrderDetailsScreen = ({ route }) => {
                 source={{
                   uri:
                     ApiUrl.imageURL +
-                    item.product.attributes.image.data[0].attributes.url,
+                    item.attributes.image.data[0].attributes.url,
                 }}
               />
               <View style={styles.productTextContainer}>
-                <Text>{`Sản phẩm: ${item.product.attributes.productName}`}</Text>
-                <Text>{`Số lượng: ${item.orderDetail.attributes.qty}`}</Text>
-                <Text>{`Giá: đ${formatPrice(
-                  item.orderDetail.attributes.price
+                <Text>{`Sản phẩm: ${item.attributes.productName}`}</Text>
+                <Text>{`Giá: đ${formatPrice(item.attributes.price)}`}</Text>
+                <Text>{`Số lượng: ${item.qty}`}</Text>
+                <Text>{`Tổng giá: đ${formatPrice(
+                  item.attributes.price * item.qty
                 )}`}</Text>
               </View>
             </View>

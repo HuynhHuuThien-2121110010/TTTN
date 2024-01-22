@@ -21,26 +21,7 @@ const LoginScreen = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   //----------------------
-  useEffect(() => {
-    const checkLoginStatus = async () => {
-      try {
-        const userDataString = await AsyncStorage.getItem("userData");
 
-        if (userDataString) {
-          const userData = JSON.parse(userDataString);
-
-          if (userData) {
-            login(userData);
-          }
-        }
-      } catch (error) {
-        console.error("Lỗi khi kiểm tra trạng thái đăng nhập:", error);
-      }
-    };
-
-    // Gọi hàm kiểm tra trạng thái đăng nhập khi component được mount
-    checkLoginStatus();
-  }, []);
   //-----------------------
   const fetchData = async () => {
     try {
@@ -48,7 +29,7 @@ const LoginScreen = () => {
         identifier: username,
         password: password,
       });
-
+      console.log(result);
       // Xử lý dữ liệu từ API theo nhu cầu của bạn
       console.log("Dữ liệu người dùng:", result.data);
     } catch (error) {
@@ -69,13 +50,13 @@ const LoginScreen = () => {
     }
 
     try {
-      const result = await axiosAPI.post("auth/local?populate=*", {
+      const result = await axiosAPI.post("auth/local", {
         identifier: username,
         password: password,
       });
+      console.log("Kết quả từ API:", result);
       // Kiểm tra phản hồi từ API
       // Kiểm tra phản hồi từ API
-      console.log(result);
       if (result.data && result.data.user) {
         await AsyncStorage.setItem("userData", JSON.stringify(result.data));
         login(result.data);
@@ -105,16 +86,37 @@ const LoginScreen = () => {
         return;
       }
     } catch (error) {
-      Toast.show({
-        type: "error",
-        position: "top",
-        text1: "Thông báo",
-        text2: "Tên đăng nhập hoặc mật khẩu không đúng",
-        visibilityTime: 2000,
-      });
+      // Toast.show({
+      //   type: "error",
+      //   position: "top",
+      //   text1: "Thông báo",
+      //   text2: "Lỗi đăng nhập",
+      //   visibilityTime: 2000,
+      // });
+      console.error("Lỗi khi lấy dữ liệu:", error);
+      console.error("Chi tiết lỗi từ API:", error.response.data);
     }
   };
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        const userDataString = await AsyncStorage.getItem("userData");
 
+        if (userDataString) {
+          const userData = JSON.parse(userDataString);
+
+          if (userData) {
+            login(userData);
+          }
+        }
+      } catch (error) {
+        console.error("Lỗi khi kiểm tra trạng thái đăng nhập:", error);
+      }
+    };
+
+    // Gọi hàm kiểm tra trạng thái đăng nhập khi component được mount
+    checkLoginStatus();
+  }, []);
   const handleForgotPassword = () => {
     // Xử lý quên mật khẩu
   };
