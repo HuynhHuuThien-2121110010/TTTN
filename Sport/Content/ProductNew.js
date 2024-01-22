@@ -35,8 +35,6 @@ const ProductNew = () => {
           const dateB = new Date(a.createdAt || a.updatedAt).getTime();
           return dateA - dateB; // Sắp xếp giảm dần (mới nhất đầu tiên)
         });
-
-        console.log("Dữ liệu đã sắp xếp:", sortedProductnews);
         setProductnews(sortedProductnews);
       } catch (error) {
         console.error("Error fetching data:", error);
